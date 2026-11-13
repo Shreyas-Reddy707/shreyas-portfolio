@@ -7,6 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.database import AsyncSessionLocal
 from app.models.portfolio import (
     CandidateProfile,
@@ -16,7 +17,7 @@ from app.models.portfolio import (
     PortfolioEmbedding,
     Project,
 )
-from app.services.repo_explainer import compute_embedding_768
+from app.services.repo_explainer import compute_embedding_768_with_model
 
 
 async def upsert_record_embedding(
@@ -32,20 +33,32 @@ async def upsert_record_embedding(
 ) -> bool:
     """Upsert a 768-dim embedding only when content_hash is new or changed."""
     content_hash = hashlib.sha256(chunk_text.encode("utf-8")).hexdigest()
-    existing_hash = (
+    existing_row = (
         await session.execute(
-            select(PortfolioEmbedding.content_hash).where(
+            select(PortfolioEmbedding.content_hash, PortfolioEmbedding.metadata_json).where(
                 PortfolioEmbedding.source_type == source_type,
                 PortfolioEmbedding.source_id == source_id,
                 PortfolioEmbedding.chunk_index == chunk_index,
             )
         )
-    ).scalar_one_or_none()
+    ).one_or_none()
 
-    if existing_hash == content_hash:
-        return False
+    current_model = (
+        "gemini-embedding-001"
+        if settings.AI_PROVIDER == "gemini" and settings.GEMINI_API_KEY
+        else "nomic-embed-text"
+        if settings.AI_PROVIDER == "ollama"
+        else "deterministic-offline-v1"
+    )
 
-    vector = await compute_embedding_768(chunk_text)
+    if existing_row and existing_row[0] == content_hash:
+        meta = existing_row[1] or {}
+        if meta.get("embedding_model") == current_model:
+            return False
+
+    vector, model_name = await compute_embedding_768_with_model(chunk_text)
+    enriched_metadata = {**metadata_json, "embedding_model": model_name}
+
     stmt = pg_insert(PortfolioEmbedding).values(
         source_type=source_type,
         source_id=source_id,
@@ -53,7 +66,7 @@ async def upsert_record_embedding(
         title=title[:200],
         chunk_index=chunk_index,
         chunk_text=chunk_text,
-        metadata_json=metadata_json,
+        metadata_json=enriched_metadata,
         content_hash=content_hash,
         embedding=vector,
     )
@@ -100,6 +113,19 @@ async def seed_all_embeddings(session: AsyncSession) -> dict[str, int]:
         )
         updated += int(changed)
         skipped += int(not changed)
+
+    # Reconcile archived projects: purge any embeddings for archived projects
+    archived_project_ids = (
+        await session.execute(select(Project.id).where(Project.is_archived.is_(True)))
+    ).scalars().all()
+    if archived_project_ids:
+        from sqlalchemy import delete
+        await session.execute(
+            delete(PortfolioEmbedding).where(
+                PortfolioEmbedding.source_type == "project",
+                PortfolioEmbedding.source_id.in_(archived_project_ids),
+            )
+        )
 
     projects = (await session.execute(select(Project).where(Project.is_archived.is_(False)))).scalars().all()
     for p in projects:

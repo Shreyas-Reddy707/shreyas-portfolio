@@ -13,7 +13,7 @@ from app.core.redis_guard import check_rate_limit
 from app.core.security import (
     extract_client_ip,
     hash_client_ip,
-    validate_outbound_url,
+    validate_outbound_url_async,
     verify_turnstile_token,
 )
 from app.models.portfolio import CandidateProfile, ContactSubmission
@@ -37,7 +37,7 @@ async def send_recruiter_email_via_resend(
         return False, "RESEND_API_KEY not configured"
 
     try:
-        url = validate_outbound_url("https://api.resend.com/emails")
+        url = await validate_outbound_url_async("https://api.resend.com/emails")
     except ValueError as e:
         logger.warning("Resend outbound URL validation failed: %s", e)
         return False, f"SSRF check failed: {e}"

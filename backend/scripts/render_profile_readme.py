@@ -124,8 +124,9 @@ def push_to_github_profile(rendered_block: str, username: str, pat: str) -> bool
             raw_b64 = data.get("content", "")
             try:
                 existing_text = base64.b64decode(raw_b64).decode("utf-8")
-            except Exception:
-                existing_text = ""
+            except Exception as exc:
+                print(f"Failed to safely decode existing README content: {exc}")
+                return False
             print(f"Fetched existing README.md for {username}/{username} (SHA: {sha})")
         elif resp.status_code == 404:
             print(f"README.md does not exist yet in {username}/{username}; creating fresh.")

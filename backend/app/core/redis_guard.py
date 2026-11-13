@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import secrets
 import time
 from datetime import UTC, datetime
@@ -9,6 +10,8 @@ import redis.asyncio as aioredis
 from fastapi import HTTPException, status
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 _redis_client: aioredis.Redis | None = None
 _redis_loop: asyncio.AbstractEventLoop | None = None
@@ -28,26 +31,70 @@ async def get_redis() -> aioredis.Redis:
     return _redis_client
 
 
+_RATE_LIMIT_LUA = """
+local key = KEYS[1]
+local now = tonumber(ARGV[1])
+local window_start = tonumber(ARGV[2])
+local limit = tonumber(ARGV[3])
+local window_seconds = tonumber(ARGV[4])
+local member = ARGV[5]
+
+redis.call('zremrangebyscore', key, 0, window_start)
+local current_count = tonumber(redis.call('zcard', key))
+
+if current_count >= limit then
+    return {0, current_count}
+else
+    redis.call('zadd', key, now, member)
+    redis.call('expire', key, window_seconds)
+    return {1, current_count + 1}
+end
+"""
+
+_AI_CONSUME_BUDGET_LUA = """
+local key = KEYS[1]
+local tokens = tonumber(ARGV[1])
+local budget = tonumber(ARGV[2])
+
+local current = tonumber(redis.call('get', key) or '0')
+if (current + tokens) <= budget then
+    local new_val = redis.call('incrby', key, tokens)
+    if current == 0 then
+        redis.call('expire', key, 86400)
+    end
+    return 1
+else
+    return 0
+end
+"""
+
+
 async def check_rate_limit(
     scope: str,
     ip_sha256: str,
     limit: int,
     window_seconds: int,
 ) -> tuple[bool, int]:
-    """Enforce an atomic Redis sorted-set sliding-window rate limit."""
+    """Enforce an atomic Redis sorted-set sliding-window rate limit via Lua script."""
     client = await get_redis()
     key = f"rl:{scope}:{ip_sha256}"
     now = time.time()
     window_start = now - window_seconds
     member = f"{now:.6f}:{secrets.token_hex(4)}"
 
-    async with client.pipeline(transaction=True) as pipe:
-        pipe.zremrangebyscore(key, 0, window_start)
-        pipe.zcard(key)
-        results = await pipe.execute()
+    res = await client.eval(
+        _RATE_LIMIT_LUA,
+        1,
+        key,
+        now,
+        window_start,
+        limit,
+        window_seconds,
+        member,
+    )
+    allowed, count = int(res[0]), int(res[1])
 
-    current_count = int(results[1])
-    if current_count >= limit:
+    if allowed == 0:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail={
@@ -60,12 +107,7 @@ async def check_rate_limit(
             },
         )
 
-    async with client.pipeline(transaction=True) as pipe:
-        pipe.zadd(key, {member: now})
-        pipe.expire(key, window_seconds)
-        await pipe.execute()
-
-    remaining = max(0, limit - (current_count + 1))
+    remaining = max(0, limit - count)
     return True, remaining
 
 
@@ -89,9 +131,14 @@ async def set_cached_json(
 
 
 async def invalidate_portfolio_cache() -> None:
-    """Purge cached public portfolio and manifest payloads."""
+    """Purge cached public portfolio and manifest payloads and local in-memory context cache."""
     client = await get_redis()
     await client.delete("cache:public:portfolio:v1", "cache:public:manifest:v1")
+    try:
+        from app.services.rag_agent import clear_portfolio_data_cache
+        clear_portfolio_data_cache()
+    except Exception as exc:
+        logger.debug("Failed to clear local portfolio cache: %s", exc)
 
 
 async def acquire_webhook_delivery_lock(
@@ -106,12 +153,10 @@ async def acquire_webhook_delivery_lock(
 
 
 async def consume_ai_tokens(tokens: int) -> bool:
-    """Increment daily AI token usage and trip circuit breaker if budget exceeded."""
+    """Atomically increment daily AI token usage and trip circuit breaker if budget exceeded."""
     client = await get_redis()
     today = datetime.now(UTC).strftime("%Y-%m-%d")
     key = f"ai:tokens:{today}"
-    new_total = await client.incrby(key, tokens)
-    if new_total == tokens:
-        await client.expire(key, 86400)
-    return int(new_total) <= settings.DAILY_AI_TOKEN_BUDGET
+    res = await client.eval(_AI_CONSUME_BUDGET_LUA, 1, key, tokens, settings.DAILY_AI_TOKEN_BUDGET)
+    return bool(int(res) == 1)
 

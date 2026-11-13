@@ -49,12 +49,15 @@ export function CertificatesClientView({
 
       const targetCert = certificates.find((c) => c.slug === targetSlug);
       if (targetCert) {
-        if (!targetCert.is_featured && tierFilter === "featured") {
-          setTierFilter("all");
-        }
-        if (activeCategory !== "All" && targetCert.category !== activeCategory) {
-          setActiveCategory("All");
-        }
+        setTierFilter((prevTier) => {
+          if (prevTier === "featured" && !targetCert.is_featured) return "all";
+          if (prevTier === "foundation" && targetCert.is_featured) return "all";
+          return prevTier;
+        });
+        setActiveCategory((prevCat) => {
+          if (prevCat !== "All" && targetCert.category !== prevCat) return "All";
+          return prevCat;
+        });
         setTimeout(() => {
           const el = document.getElementById(targetSlug);
           if (el) {
@@ -69,7 +72,7 @@ export function CertificatesClientView({
     handleHashJump();
     window.addEventListener("hashchange", handleHashJump);
     return () => window.removeEventListener("hashchange", handleHashJump);
-  }, [certificates, tierFilter, activeCategory]);
+  }, [certificates]);
 
   return (
     <div className="space-y-10">

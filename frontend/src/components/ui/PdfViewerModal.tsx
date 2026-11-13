@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, ExternalLink, FileText, X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface PdfViewerModalProps {
   isOpen: boolean;
@@ -18,19 +18,69 @@ export function PdfViewerModal({
   title,
   subtitle,
 }: PdfViewerModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      window.addEventListener("keydown", handleKeyDown);
+    const isVisible = isOpen && Boolean(pdfUrl);
+    if (!isVisible) return;
+
+    previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null;
+    document.body.style.overflow = "hidden";
+
+    const mainElement = document.querySelector("main");
+    if (mainElement) {
+      mainElement.setAttribute("aria-hidden", "true");
     }
+
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable && focusable.length > 0) {
+      focusable[0].focus();
+    } else {
+      dialogRef.current?.focus();
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusableNodes = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter((el) => !el.hasAttribute("disabled"));
+
+        if (focusableNodes.length === 0) return;
+
+        const first = focusableNodes[0];
+        const last = focusableNodes[focusableNodes.length - 1];
+
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
     return () => {
       document.body.style.overflow = "auto";
       window.removeEventListener("keydown", handleKeyDown);
+      if (mainElement) {
+        mainElement.removeAttribute("aria-hidden");
+      }
+      previouslyFocusedElementRef.current?.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, pdfUrl, onClose]);
 
   if (!isOpen || !pdfUrl) return null;
 
@@ -38,12 +88,14 @@ export function PdfViewerModal({
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md transition-opacity duration-200"
       onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="pdf-modal-title"
     >
       <div
-        className="relative flex flex-col w-full max-w-5xl h-[88vh] rounded-2xl border border-hairline bg-[#0B0F17] shadow-2xl shadow-black/80 overflow-hidden"
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pdf-modal-title"
+        tabIndex={-1}
+        className="relative flex flex-col w-full max-w-5xl h-[88vh] rounded-2xl border border-hairline bg-[#0B0F17] shadow-2xl shadow-black/80 overflow-hidden focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}

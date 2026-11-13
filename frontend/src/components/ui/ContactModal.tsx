@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, CheckCircle2, Copy, Github, Linkedin, Mail, Phone, Send, X } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { revealContactDetails, submitContactForm } from "@/lib/api";
 
 interface ContactModalProps {
@@ -21,6 +21,58 @@ export function ContactModal({ open, onClose, linkedinUrl, githubUrl }: ContactM
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ message: string; emailDispatched: boolean } | null>(null);
   const [copiedType, setCopiedType] = useState<"email" | "phone" | null>(null);
+
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setSuccess(null);
+      setError(null);
+      previousActiveElement.current = document.activeElement as HTMLElement | null;
+      document.body.style.overflow = "hidden";
+
+      const timer = setTimeout(() => {
+        const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables && focusables.length > 0) {
+          focusables[0].focus();
+        }
+      }, 50);
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          onClose();
+        } else if (e.key === "Tab") {
+          if (!dialogRef.current) return;
+          const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusables.length === 0) return;
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = "auto";
+        window.removeEventListener("keydown", handleKeyDown);
+        if (previousActiveElement.current) {
+          previousActiveElement.current.focus();
+        }
+      };
+    }
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -65,12 +117,20 @@ export function ContactModal({ open, onClose, linkedinUrl, githubUrl }: ContactM
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md">
-      <div className="w-full max-w-lg rounded-2xl border border-slate-800 bg-[#0B0F17] p-6 shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="contact-modal-title"
+    >
+      <div
+        ref={dialogRef}
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-800 bg-[#0B0F17] p-6 shadow-2xl my-auto"
+      >
         <div className="mb-4 flex items-center justify-between border-b border-hairline pb-3">
           <div className="flex items-center gap-2 font-mono">
             <span className="h-2 w-2 rounded-full bg-emeraldSignal animate-pulse" />
-            <h2 className="text-base font-bold text-[#FAFAFA]">
+            <h2 id="contact-modal-title" className="text-base font-bold text-[#FAFAFA]">
               Get in Touch with Shreyas Reddy
             </h2>
           </div>

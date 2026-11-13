@@ -96,6 +96,7 @@ export function PersistentCanvas() {
     const onVisibilityChange = () => {
       setIsHidden(document.hidden);
     };
+    onVisibilityChange();
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       document.removeEventListener("visibilitychange", onVisibilityChange);
@@ -115,7 +116,7 @@ export function PersistentCanvas() {
   }, [pathname]);
 
   return (
-    <SceneErrorBoundary key={pathname}>
+    <SceneErrorBoundary>
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-0 opacity-80"

@@ -123,7 +123,7 @@ Stores both curated deep-dive flagship projects (`is_flagship = TRUE`) and publi
         github_repo_id BIGINT UNIQUE,
         title VARCHAR(160) NOT NULL,
         tagline VARCHAR(280) NOT NULL,
-        category VARCHAR(64) NOT NULL DEFAULT 'AI & Systems'
+        category VARCHAR(64) NOT NULL DEFAULT 'Full-Stack & Open Source'
             CHECK (category IN ('Agentic AI & RAG', 'Cybersecurity & Zero-Trust', 'Computer Vision & ML', 'Full-Stack & Open Source')),
         summary TEXT NOT NULL,
         architecture_md TEXT NOT NULL,

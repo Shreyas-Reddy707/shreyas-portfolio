@@ -121,34 +121,45 @@ async def test_04_github_sync_upserts_auto_synced_repo_and_preserves_flagship():
         assert result["flagship_updated"] == 1
         assert result["auto_synced"] == 1
 
-        flagship = (
-            await session.execute(select(Project).where(Project.slug == "securerag"))
-        ).scalar_one()
-        assert flagship.is_flagship is True
-        assert flagship.stars_count == 42
+        try:
+            flagship = (
+                await session.execute(select(Project).where(Project.slug == "securerag"))
+            ).scalar_one()
+            assert flagship.is_flagship is True
+            assert flagship.stars_count == 42
 
-        auto_repo = (
-            await session.execute(
-                select(Project).where(Project.slug == "agentic-research-assistant")
-            )
-        ).scalar_one()
-        assert auto_repo.is_auto_synced is True
-        assert auto_repo.is_flagship is False
-        assert "problem_statement" in auto_repo.ai_explainer
-        assert "architecture_stack" in auto_repo.ai_explainer
-
-        # Clean up test-only auto-synced row and restore flagship star count
-        await session.execute(
-            delete(PortfolioEmbedding).where(
-                PortfolioEmbedding.source_type == "project",
-                PortfolioEmbedding.source_id == auto_repo.id,
-            )
-        )
-        await session.execute(
-            delete(Project).where(Project.id == auto_repo.id)
-        )
-        flagship.stars_count = 0
-        await session.commit()
+            auto_repo = (
+                await session.execute(
+                    select(Project).where(Project.slug == "agentic-research-assistant")
+                )
+            ).scalar_one()
+            assert auto_repo.is_auto_synced is True
+            assert auto_repo.is_flagship is False
+            assert "problem_statement" in auto_repo.ai_explainer
+            assert "architecture_stack" in auto_repo.ai_explainer
+        finally:
+            # Clean up test-only auto-synced row and restore flagship star count
+            auto_repo_opt = (
+                await session.execute(
+                    select(Project).where(Project.slug == "agentic-research-assistant")
+                )
+            ).scalar_one_or_none()
+            if auto_repo_opt:
+                await session.execute(
+                    delete(PortfolioEmbedding).where(
+                        PortfolioEmbedding.source_type == "project",
+                        PortfolioEmbedding.source_id == auto_repo_opt.id,
+                    )
+                )
+                await session.execute(
+                    delete(Project).where(Project.id == auto_repo_opt.id)
+                )
+            flagship_opt = (
+                await session.execute(select(Project).where(Project.slug == "securerag"))
+            ).scalar_one_or_none()
+            if flagship_opt:
+                flagship_opt.stars_count = 0
+            await session.commit()
 
 
 @pytest.mark.asyncio

@@ -9,55 +9,78 @@ interface InteractivePipelineCardProps {
   onOpenDossier?: (project: ProjectItem) => void;
 }
 
+const DEFAULT_PIPELINE_LAYERS: PipelineLayer[] = [
+  {
+    id: "L1",
+    name: "Input Ingestion & Validation",
+    badge: "ingress",
+    accent: "cyan",
+    detail: "Validates input streams and payload schema boundaries.",
+  },
+  {
+    id: "L2",
+    name: "Core Processing Pipeline",
+    badge: "core",
+    accent: "violet",
+    detail: "Executes business logic and algorithmic transformations.",
+  },
+  {
+    id: "L3",
+    name: "Security & Policy Invariant Audit",
+    badge: "security",
+    accent: "emerald",
+    detail: "Enforces strict authorization and data sanitization invariants.",
+  },
+  {
+    id: "L4",
+    name: "Telemetry & Metric Emission",
+    badge: "telemetry",
+    accent: "cyan",
+    detail: "Streams real-time metrics and operational performance logs.",
+  },
+  {
+    id: "L5",
+    name: "Persistent Store & Vector Indexing",
+    badge: "store",
+    accent: "violet",
+    detail: "Persists immutable records and refreshes vector indexes.",
+  },
+];
+
 export function InteractivePipelineCard({
   project,
   onOpenDossier,
 }: InteractivePipelineCardProps) {
-  const layers: PipelineLayer[] = project.model_3d_config?.pipeline_layers || [
-    {
-      id: "L1",
-      name: "Input Ingestion & Validation",
-      badge: "ingress",
-      accent: "cyan",
-      detail: "Validates input streams and payload schema boundaries.",
-    },
-    {
-      id: "L2",
-      name: "Core Processing Pipeline",
-      badge: "core",
-      accent: "violet",
-      detail: "Executes business logic and algorithmic transformations.",
-    },
-    {
-      id: "L3",
-      name: "Security & Policy Invariant Audit",
-      badge: "security",
-      accent: "emerald",
-      detail: "Enforces strict authorization and data sanitization invariants.",
-    },
-    {
-      id: "L4",
-      name: "Telemetry & Metric Emission",
-      badge: "telemetry",
-      accent: "cyan",
-      detail: "Streams real-time metrics and operational performance logs.",
-    },
-    {
-      id: "L5",
-      name: "Persistent Store & Vector Indexing",
-      badge: "store",
-      accent: "violet",
-      detail: "Persists immutable records and refreshes vector indexes.",
-    },
-  ];
+  const configuredLayers = project.model_3d_config?.pipeline_layers;
+  const layers: PipelineLayer[] =
+    configuredLayers && configuredLayers.length > 0
+      ? configuredLayers
+      : DEFAULT_PIPELINE_LAYERS;
 
   const [activeLayerIndex, setActiveLayerIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const selectLayer = (idx: number, isExplicit = false) => {
+    setActiveLayerIndex(idx);
+    setIsPaused(true);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("portfolio:active-layer", {
+          detail: {
+            projectSlug: project.slug,
+            layerIndex: idx,
+            layerId: layers[idx]?.id || "L1",
+            selectProject: isExplicit,
+          },
+        })
+      );
+    }
+  };
+
   // Dispatch 3D sync event whenever activeLayerIndex changes
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && layers.length > 0) {
       window.dispatchEvent(
         new CustomEvent("portfolio:active-layer", {
           detail: {
@@ -72,7 +95,7 @@ export function InteractivePipelineCard({
 
   // Auto-cycle through layers every 2.8 seconds when not paused
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || layers.length <= 1) return;
 
     timerRef.current = setInterval(() => {
       setActiveLayerIndex((prev) => (prev + 1) % layers.length);
@@ -86,8 +109,17 @@ export function InteractivePipelineCard({
   return (
     <div
       className="relative flex flex-col justify-between rounded-2xl border border-slate-800/80 bg-[#0B0F17]/95 p-5 shadow-2xl backdrop-blur transition-all duration-300"
-      onMouseEnter={() => setIsPaused(true)}
+      onMouseEnter={() => {
+        setIsPaused(true);
+        selectLayer(activeLayerIndex, true);
+      }}
       onMouseLeave={() => setIsPaused(false)}
+      onFocus={() => setIsPaused(true)}
+      onBlur={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+          setIsPaused(false);
+        }
+      }}
     >
       {/* Top Header */}
       <div className="flex items-center justify-between pb-3.5 mb-3 border-b border-hairline font-mono text-[11px]">
@@ -115,17 +147,14 @@ export function InteractivePipelineCard({
           const isEmerald = layer.accent === "emerald";
 
           return (
-            <div
+            <button
+              type="button"
               key={layer.id || idx}
-              onClick={() => {
-                setActiveLayerIndex(idx);
-                setIsPaused(true);
-              }}
-              onMouseEnter={() => {
-                setActiveLayerIndex(idx);
-                setIsPaused(true);
-              }}
-              className={`group cursor-pointer rounded-xl border p-3 transition-all duration-200 ${
+              aria-pressed={isActive}
+              onClick={() => selectLayer(idx, true)}
+              onMouseEnter={() => selectLayer(idx, true)}
+              onFocus={() => selectLayer(idx, true)}
+              className={`group w-full text-left cursor-pointer rounded-xl border p-3 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanPulse focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F17] ${
                 isActive
                   ? "border-[#00F0FF] bg-[#00F0FF]/[0.08] shadow-[0_0_22px_rgba(0,240,255,0.18)] scale-[1.01]"
                   : "border-hairline/70 bg-surface/50 hover:border-slate-600 hover:bg-surface/80"
@@ -172,7 +201,7 @@ export function InteractivePipelineCard({
                   <p>{layer.detail}</p>
                 </div>
               )}
-            </div>
+            </button>
           );
         })}
       </div>

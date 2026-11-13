@@ -9,6 +9,7 @@ export async function fetchPortfolioBundle(): Promise<PortfolioBundle> {
   try {
     const res = await fetch(`${API_BASE}/public/portfolio`, {
       next: { revalidate: 3600, tags: ["portfolio"] },
+      signal: AbortSignal.timeout(3000),
     });
     if (res.ok) {
       return (await res.json()) as PortfolioBundle;
@@ -17,13 +18,29 @@ export async function fetchPortfolioBundle(): Promise<PortfolioBundle> {
     // Fall back to local GitOps seed manifest when backend is offline during build
   }
 
-  const manifestPath = path.resolve(
-    process.cwd(),
-    "..",
-    "content",
-    "portfolio_data.json"
-  );
-  const raw = await fs.readFile(manifestPath, "utf-8");
+  const candidatePaths = [
+    path.resolve(process.cwd(), "..", "content", "portfolio_data.json"),
+    path.resolve(process.cwd(), "content", "portfolio_data.json"),
+    path.resolve(process.cwd(), "public", "content", "portfolio_data.json"),
+    path.resolve(process.cwd(), "frontend", "public", "content", "portfolio_data.json"),
+  ];
+
+  let raw: string | null = null;
+  for (const candidate of candidatePaths) {
+    try {
+      raw = await fs.readFile(candidate, "utf-8");
+      if (raw) break;
+    } catch {
+      continue;
+    }
+  }
+
+  if (!raw) {
+    throw new Error(
+      "Unable to locate fallback portfolio manifest at content/portfolio_data.json"
+    );
+  }
+
   const parsed = JSON.parse(raw);
 
   const nowIso = new Date().toISOString();

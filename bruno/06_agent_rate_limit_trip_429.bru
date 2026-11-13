@@ -22,8 +22,14 @@ body:json {
 }
 
 tests {
-  test("Security header X-Content-Type-Options is nosniff", function() {
+  test("Rate limit or success retains nosniff header", function() {
     expect(res.getHeader("x-content-type-options")).to.equal("nosniff");
+  });
+
+  test("When 429 is tripped, retry_after_seconds is positive", function() {
+    if (res.getStatus() === 429) {
+      expect(res.getBody().retry_after_seconds).to.be.above(0);
+    }
   });
 }
 

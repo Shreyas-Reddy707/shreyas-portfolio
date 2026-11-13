@@ -8,6 +8,11 @@ export function ProjectBlueprintsScene() {
   const [activeProjectSlug, setActiveProjectSlug] = useState<string>("securerag");
   const [activeVisualizerType, setActiveVisualizerType] = useState<string>("zero_trust_shield_stack");
   const [activeLayer, setActiveLayer] = useState<number>(0);
+  const selectedProjectRef = useRef<string>("securerag");
+
+  useEffect(() => {
+    selectedProjectRef.current = activeProjectSlug;
+  }, [activeProjectSlug]);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -15,16 +20,30 @@ export function ProjectBlueprintsScene() {
         projectSlug: string;
         layerIndex: number;
         visualizerType?: string;
+        selectProject?: boolean;
       }>;
-      if (custom.detail) {
-        if (typeof custom.detail.layerIndex === "number") {
-          setActiveLayer(custom.detail.layerIndex);
+      if (!custom.detail) return;
+
+      const { projectSlug, layerIndex, visualizerType, selectProject } = custom.detail;
+
+      // When switching project selection explicitly:
+      if (selectProject && projectSlug && projectSlug !== selectedProjectRef.current) {
+        selectedProjectRef.current = projectSlug;
+        setActiveProjectSlug(projectSlug);
+        setActiveLayer(typeof layerIndex === "number" ? layerIndex : 0);
+        if (visualizerType) {
+          setActiveVisualizerType(visualizerType);
         }
-        if (custom.detail.projectSlug) {
-          setActiveProjectSlug(custom.detail.projectSlug);
+        return;
+      }
+
+      // Accept layer updates only when detail.projectSlug matches the currently selected project
+      if (projectSlug && projectSlug === selectedProjectRef.current) {
+        if (typeof layerIndex === "number") {
+          setActiveLayer(layerIndex);
         }
-        if (custom.detail.visualizerType) {
-          setActiveVisualizerType(custom.detail.visualizerType);
+        if (visualizerType) {
+          setActiveVisualizerType(visualizerType);
         }
       }
     };
@@ -44,9 +63,40 @@ export function ProjectBlueprintsScene() {
         <CorpusFunnelCubeVisualizer activeLayer={activeLayer} />
       ) : activeVisualizerType === "cv_topography_comparator" ? (
         <CvTopographySurfaceVisualizer activeLayer={activeLayer} />
+      ) : activeVisualizerType === "ml_model_eval_matrix" ||
+        activeVisualizerType === "colab_notebook_workflow" ||
+        activeVisualizerType === "architecture_flowchart_dag" ? (
+        <CadModuleVisualizer activeLayer={activeLayer} />
       ) : (
         <ZeroTrustShieldStackVisualizer activeLayer={activeLayer} />
       )}
+    </group>
+  );
+}
+
+function CadModuleVisualizer({ activeLayer }: { activeLayer: number }) {
+  const meshRef = useRef<THREE.Group>(null);
+  useFrame((_, delta) => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += delta * 0.25;
+      meshRef.current.rotation.x = Math.sin(delta) * 0.1;
+    }
+  });
+  return (
+    <group ref={meshRef}>
+      <mesh>
+        <octahedronGeometry args={[1.4, 0]} />
+        <meshBasicMaterial color="#00F0FF" wireframe transparent opacity={0.65} />
+      </mesh>
+      <mesh scale={[0.65, 0.65, 0.65]}>
+        <dodecahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial
+          color="#8B5CF6"
+          emissive="#8B5CF6"
+          emissiveIntensity={0.5 + activeLayer * 0.1}
+          wireframe
+        />
+      </mesh>
     </group>
   );
 }

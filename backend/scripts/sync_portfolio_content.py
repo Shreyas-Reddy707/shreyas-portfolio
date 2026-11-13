@@ -203,6 +203,7 @@ async def sync_database_from_manifest(manifest_path: Path) -> dict[str, Any]:
             await session.execute(
                 select(Project).where(
                     Project.slug.notin_(manifest_project_slugs),
+                    Project.is_auto_synced.is_(False),
                 )
             )
         ).scalars().all()
@@ -467,7 +468,8 @@ async def sync_database_from_manifest(manifest_path: Path) -> dict[str, Any]:
                 gh_result = await sync_github_repositories(session)
                 print(f"GitHub sync completed: {gh_result}")
             except Exception as e:
-                print(f"GitHub sync warning: {e}")
+                await session.rollback()
+                print(f"GitHub sync warning (session rolled back): {e}")
 
         # 7. Refresh embeddings
         print("Refreshing pgvector embeddings...")

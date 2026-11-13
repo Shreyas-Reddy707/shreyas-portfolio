@@ -18,19 +18,14 @@ headers {
 }
 
 body:json {
-  {
-    "ref": "refs/heads/main",
-    "repository": {
-      "full_name": "shreyas-reddy/SecureRAG"
-    }
-  }
+  {"ref":"refs/heads/main","repository":{"full_name":"shreyas-reddy/SecureRAG"}}
 }
 
 script:pre-request {
   const crypto = require("crypto");
   const uuid = crypto.randomUUID();
   bru.setVar("deliveryUuid", uuid);
-  const rawBody = JSON.stringify(req.getBody());
+  const rawBody = '{"ref":"refs/heads/main","repository":{"full_name":"shreyas-reddy/SecureRAG"}}';
   const secret = bru.getEnvVar("githubWebhookSecret") || "";
   const hmac = "sha256=" + crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
   bru.setVar("computedHmac", hmac);

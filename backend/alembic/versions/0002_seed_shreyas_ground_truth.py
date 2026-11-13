@@ -67,7 +67,6 @@ def upgrade() -> None:
     conn.execute(profile_stmt)
 
     # 2. Upsert Flagship Projects
-    project_id_by_slug: dict[str, object] = {}
     for proj in data["projects"]:
         proj_stmt = pg_insert(Project).values(**proj)
         proj_stmt = proj_stmt.on_conflict_do_update(
@@ -92,9 +91,8 @@ def upgrade() -> None:
                 "model_3d_config": proj_stmt.excluded.model_3d_config,
                 "updated_at": sa.func.now(),
             },
-        ).returning(Project.id, Project.slug)
-        row = conn.execute(proj_stmt).one()
-        project_id_by_slug[row.slug] = row.id
+        )
+        conn.execute(proj_stmt)
 
     # 3. Upsert Experiences
     for exp in data["experiences"]:
@@ -130,9 +128,14 @@ def upgrade() -> None:
     for hack in data["hackathons"]:
         hack_copy = dict(hack)
         project_slug = hack_copy.pop("project_slug", None)
+        project_subquery = (
+            sa.select(Project.id).where(Project.slug == project_slug).scalar_subquery()
+            if project_slug
+            else None
+        )
         hack_payload = {
             **hack_copy,
-            "project_id": project_id_by_slug.get(project_slug) if project_slug else None,
+            "project_id": project_subquery,
             "event_date": date.fromisoformat(hack_copy["event_date"]),
         }
         hack_stmt = pg_insert(Hackathon).values(**hack_payload)

@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -17,6 +18,7 @@ from app.models.portfolio import WebhookDelivery
 from app.services.github_sync import sync_github_repositories
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/webhooks/github")
@@ -67,7 +69,7 @@ async def receive_github_webhook(
             select(WebhookDelivery).where(WebhookDelivery.delivery_id == delivery_id)
         )
     ).scalar_one_or_none()
-    if existing_delivery is not None:
+    if existing_delivery is not None and existing_delivery.status != "rejected_hmac":
         return {"status": "duplicate_ignored", "delivery_id": delivery_id}
 
     repo_full_name = None
@@ -82,21 +84,44 @@ async def receive_github_webhook(
     except Exception:
         repo_full_name = None
 
-    db.add(
-        WebhookDelivery(
+    if existing_delivery is not None:
+        delivery_record = existing_delivery
+        delivery_record.event_type = event_type[:64]
+        delivery_record.repository_full_name = repo_full_name[:200] if repo_full_name else None
+        delivery_record.signature_verified = True
+        delivery_record.payload_sha256 = payload_hash
+        delivery_record.status = "failed"
+    else:
+        delivery_record = WebhookDelivery(
             delivery_id=delivery_id[:64],
             event_type=event_type[:64],
             repository_full_name=repo_full_name[:200] if repo_full_name else None,
             signature_verified=True,
             payload_sha256=payload_hash,
-            status="processed",
+            status="failed",
         )
-    )
+        db.add(delivery_record)
     await db.commit()
 
-    if event_type in {"push", "repository", "release"} and repo_obj is not None:
-        await sync_github_repositories(db, repo_payloads=[repo_obj])
-    else:
-        await invalidate_portfolio_cache()
+    try:
+        if event_type in {"push", "repository", "release"} and repo_obj is not None:
+            await sync_github_repositories(db, repo_payloads=[repo_obj])
+        else:
+            await invalidate_portfolio_cache()
+
+        delivery_record.status = "processed"
+        await db.commit()
+    except Exception as exc:
+        delivery_record.status = "failed"
+        delivery_record.error_detail = str(exc)[:500]
+        await db.commit()
+        try:
+            from app.core.redis_guard import get_redis
+
+            client = await get_redis()
+            await client.delete(f"webhook:lock:{delivery_id}")
+        except Exception as redis_err:
+            logger.debug("Failed to release webhook delivery lock: %s", redis_err)
+        raise
 
     return {"status": "accepted", "delivery_id": delivery_id}

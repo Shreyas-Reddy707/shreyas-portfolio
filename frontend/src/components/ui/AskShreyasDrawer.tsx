@@ -201,6 +201,9 @@ export function AskShreyasDrawer() {
 
     if (currentPath === targetPath) {
       e.preventDefault();
+      if (typeof window !== "undefined" && window.innerWidth < 768) {
+        setOpen(false);
+      }
       if (targetSlug) {
         const el = document.getElementById(targetSlug);
         if (el) {

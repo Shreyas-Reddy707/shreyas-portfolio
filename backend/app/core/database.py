@@ -19,6 +19,7 @@ class Base(DeclarativeBase):
 
 _engine_kwargs: dict = {
     "echo": settings.DEBUG,
+    "hide_parameters": True,
     "pool_pre_ping": True,
 }
 if os.getenv("PYTEST_CURRENT_TEST") or "pytest" in sys.modules:

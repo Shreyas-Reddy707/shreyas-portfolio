@@ -134,7 +134,7 @@ Run inside `PS C:\Users\shrey\Documents\Shreyas\Projects\shreyas-portfolio>`:
 Run inside `PS C:\Users\shrey\Documents\Shreyas\Projects\shreyas-portfolio>`:
 
     # 1. Run initial seed embedding indexer & verify pgvector rows:
-    .\backend\.venv\Scripts\python.exe -m app.services.seed_embeddings --app-dir backend
+    Push-Location backend; .\.venv\Scripts\python.exe -m app.services.seed_embeddings; Pop-Location
     docker exec -it shreyas_portfolio_postgres psql -U postgres -d postgres -c "SELECT source_type, COUNT(*) FROM portfolio_embeddings GROUP BY source_type;"
 
     # 2. Run Pytest security and sync unit tests:

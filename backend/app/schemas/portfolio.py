@@ -46,11 +46,13 @@ class ContactSubmissionRequest(BaseModel):
     message: str = Field(..., min_length=10, max_length=2000)
     turnstile_token: str = Field(..., min_length=10, max_length=2048)
 
-    @field_validator("sender_name", "sender_company", "role_opportunity", "message")
+    @field_validator("sender_name", "sender_company", "role_opportunity", "message", mode="before")
     @classmethod
-    def strip_html_and_controls(cls, v: str | None) -> str | None:
+    def strip_html_and_controls(cls, v: Any) -> Any:
         if v is None:
             return None
+        if not isinstance(v, str):
+            return v
         cleaned = _HTML_TAGS_RE.sub("", v)
         cleaned = _CONTROL_CHARS_RE.sub(" ", cleaned).strip()
         return cleaned

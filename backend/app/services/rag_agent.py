@@ -24,6 +24,12 @@ logger = logging.getLogger(__name__)
 _PORTFOLIO_DATA_CACHE: tuple[str, list[dict[str, Any]]] | None = None
 
 
+def clear_portfolio_data_cache() -> None:
+    """Clear the in-memory cached portfolio context and entity catalog."""
+    global _PORTFOLIO_DATA_CACHE
+    _PORTFOLIO_DATA_CACHE = None
+
+
 async def build_full_portfolio_context(
     session: AsyncSession,
 ) -> tuple[str, list[dict[str, Any]]]:
@@ -304,43 +310,13 @@ def resolve_accurate_citations(
 
     # Sort primarily by the order entities were discussed in the answer
     scored_matches.sort(key=lambda x: x[0])
-    selected = [item for _, item in scored_matches]
-
-    # Intent-specific rules:
-    # Hackathons: If query is specifically about hackathons, return all 3 hackathons (never pad with education)
-    if allowed_types == {"hackathon"}:
-        if len(selected) < 3:
-            for item in catalog:
-                if item["source_type"] == "hackathon" and item["slug"] not in seen_slugs:
-                    seen_slugs.add(item["slug"])
-                    selected.append(item)
-                    if len(selected) >= 3:
-                        break
-        return [
-            {"source_type": item["source_type"], "slug": item["slug"], "title": item["title"]}
-            for item in selected[:3]
-        ]
-
-    # Projects: If query is specifically about projects, fill remaining slots up to 4 strictly from projects
-    if allowed_types == {"project"}:
-        if len(selected) < 4:
-            for item in catalog:
-                if item["source_type"] == "project" and item["slug"] not in seen_slugs:
-                    seen_slugs.add(item["slug"])
-                    selected.append(item)
-                    if len(selected) >= 4:
-                        break
-        return [
-            {"source_type": item["source_type"], "slug": item["slug"], "title": item["title"]}
-            for item in selected[:4]
-        ]
+    selected = [item for _, item in scored_matches if item["source_type"] in allowed_types]
 
     # If no matches were found through text scanning, use vector_rows filtered by allowed types
     if not selected:
         for r in vector_rows:
             if r.source_type in allowed_types and r.source_slug not in seen_slugs:
                 seen_slugs.add(r.source_slug)
-                # Find matching catalog item for clean title
                 cat_item = next((c for c in catalog if c["slug"] == r.source_slug), None)
                 title = cat_item["title"] if cat_item else f"{r.source_type.title()}: {r.title}"
                 selected.append({
@@ -350,17 +326,6 @@ def resolve_accurate_citations(
                 })
                 if len(selected) >= 4:
                     break
-
-    # If still empty (e.g. edge case), fallback to top vector rows
-    if not selected:
-        for r in vector_rows[:3]:
-            cat_item = next((c for c in catalog if c["slug"] == r.source_slug), None)
-            title = cat_item["title"] if cat_item else f"{r.source_type.title()}: {r.title}"
-            selected.append({
-                "source_type": r.source_type,
-                "slug": r.source_slug,
-                "title": title,
-            })
 
     return [
         {"source_type": item["source_type"], "slug": item["slug"], "title": item["title"]}
@@ -530,12 +495,7 @@ def build_formatted_fallback(query: str, rows: list[PortfolioEmbedding]) -> str:
             break
 
     if not clean_bullets:
-        clean_bullets = [
-            "- **SecureRAG:** 5-Layer Zero-Trust Multi-Agent Defense halting indirect prompt injection with 0.0% attack success.",
-            "- **Limelite Constructions:** Forward Deployed Engineer architecting automated PDF spec generation and CRM data migration.",
-            "- **VISWAM.AI:** Tech Lead directing 200+ interns across multilingual NLP and regional open-source AI applications.",
-            "- **Academic Credentials:** B.Tech CSE (AI) at ICFAI Tech (CGPA 7.24/10) with 22+ industry certifications.",
-        ]
+        return f"No matching portfolio records or engineering details found regarding '{query}'."
 
     bullets_rendered = "\n".join(clean_bullets[:4])
     return (
@@ -550,43 +510,55 @@ async def answer_recruiter_query(
     category_filter: str | None = None,
 ) -> dict[str, Any]:
     """Answer a recruiter query via full portfolio context + pgvector similarity + accurate citations."""
-    query_vec = await compute_embedding_768(query)
+    import asyncio
 
-    stmt = select(PortfolioEmbedding)
-    if category_filter:
-        stmt = stmt.where(PortfolioEmbedding.source_type == category_filter)
-    stmt = stmt.order_by(PortfolioEmbedding.embedding.cosine_distance(query_vec)).limit(4)
-
-    rows = (await session.execute(stmt)).scalars().all()
-
-    # Build or retrieve full master portfolio context and catalog
+    rows: list[PortfolioEmbedding] = []
     full_context, catalog = await build_full_portfolio_context(session)
 
-    # Combine master context with the top pgvector specific chunks
-    context_chunks = [full_context]
-    if rows:
-        context_chunks.extend([f"TOP SIMILARITY MATCH ({r.title}):\n{r.chunk_text}" for r in rows])
+    try:
+        # Enforce strict shared 10-second total deadline covering embedding and LLM generation
+        async with asyncio.timeout(10.0):
+            has_embedding_budget = await consume_ai_tokens(50)
+            if has_embedding_budget:
+                query_vec = await compute_embedding_768(query)
+            else:
+                from app.services.repo_explainer import _deterministic_offline_embedding_768
+                query_vec = _deterministic_offline_embedding_768(query)
 
-    system_instruction, user_payload = build_nonce_guarded_prompt(query, context_chunks)
-    within_budget = await consume_ai_tokens(450)
+            stmt = select(PortfolioEmbedding)
+            if category_filter:
+                stmt = stmt.where(PortfolioEmbedding.source_type == category_filter)
+            stmt = stmt.order_by(PortfolioEmbedding.embedding.cosine_distance(query_vec)).limit(4)
 
-    if within_budget:
-        answer_text, provider_used = await call_llm_with_failover(system_instruction, user_payload)
-        if answer_text:
-            citations = resolve_accurate_citations(query, answer_text, catalog, list(rows))
-            return {
-                "answer": answer_text,
-                "citations": citations,
-                "fallback_used": False,
-                "provider": provider_used,
-            }
+            rows = list((await session.execute(stmt)).scalars().all())
+
+            # Combine master context with the top pgvector specific chunks
+            context_chunks = [full_context]
+            if rows:
+                context_chunks.extend([f"TOP SIMILARITY MATCH ({r.title}):\n{r.chunk_text}" for r in rows])
+
+            system_instruction, user_payload = build_nonce_guarded_prompt(query, context_chunks)
+            within_budget = await consume_ai_tokens(400)
+
+            if within_budget:
+                answer_text, provider_used = await call_llm_with_failover(system_instruction, user_payload)
+                if answer_text:
+                    citations = resolve_accurate_citations(query, answer_text, catalog, rows)
+                    return {
+                        "answer": answer_text,
+                        "citations": citations,
+                        "fallback_used": False,
+                        "provider": provider_used,
+                    }
+    except Exception as exc:
+        logger.warning("Answer generation timed out or failed: %s; using deterministic fallback", exc)
 
     # Deterministic Clean Markdown Fallback
-    fallback_text = build_formatted_fallback(query, list(rows))
-    citations = resolve_accurate_citations(query, fallback_text, catalog, list(rows))
+    fallback_text = build_formatted_fallback(query, rows)
+    citations = resolve_accurate_citations(query, fallback_text, catalog, rows)
     return {
         "answer": fallback_text,
         "citations": citations,
         "fallback_used": True,
-        "provider": "fallback",
+        "provider": "deterministic-fallback",
     }

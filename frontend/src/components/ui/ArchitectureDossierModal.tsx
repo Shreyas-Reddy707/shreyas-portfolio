@@ -12,7 +12,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ProjectItem } from "@/lib/types";
 
 interface ArchitectureDossierModalProps {
@@ -28,18 +28,54 @@ export function ArchitectureDossierModal({
 }: ArchitectureDossierModalProps) {
   const [activeTab, setActiveTab] = useState<"pipeline" | "architecture" | "security">("pipeline");
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousActiveElement = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
     if (isOpen) {
+      previousActiveElement.current = document.activeElement as HTMLElement | null;
       document.body.style.overflow = "hidden";
+
+      const timer = setTimeout(() => {
+        const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusables && focusables.length > 0) {
+          focusables[0].focus();
+        }
+      }, 50);
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          onClose();
+        } else if (e.key === "Tab") {
+          if (!dialogRef.current) return;
+          const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusables.length === 0) return;
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      };
+
       window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = "auto";
+        window.removeEventListener("keydown", handleKeyDown);
+        if (previousActiveElement.current) {
+          previousActiveElement.current.focus();
+        }
+      };
     }
-    return () => {
-      document.body.style.overflow = "auto";
-      window.removeEventListener("keydown", handleKeyDown);
-    };
   }, [isOpen, onClose]);
 
   if (!isOpen || !project) return null;
@@ -59,6 +95,7 @@ export function ArchitectureDossierModal({
       aria-labelledby="dossier-modal-title"
     >
       <div
+        ref={dialogRef}
         className="relative flex flex-col w-full max-w-4xl max-h-[90vh] rounded-2xl border border-hairline bg-[#0B0F17] shadow-2xl shadow-cyanPulse/10 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
@@ -272,8 +309,8 @@ export function ArchitectureDossierModal({
                     </div>
                   ))}
                   {(!project.security_highlights || project.security_highlights.length === 0) && (
-                    <div className="p-4 rounded-xl border border-hairline bg-obsidian text-xs text-slate-400">
-                      Standard OWASP Top 10 defenses enforced: strict input typing, 1MB payload limits, parameterized SQL, and cryptographic session boundaries.
+                    <div className="p-4 rounded-xl border border-hairline bg-obsidian text-xs text-slate-500">
+                      Security details not provided.
                     </div>
                   )}
                 </div>

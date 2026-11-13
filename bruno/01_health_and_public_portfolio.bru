@@ -15,10 +15,10 @@ tests {
     expect(res.getStatus()).to.equal(200);
   });
 
-  test("Profile full_name matches Chemakoora Shreyas Reddy", function() {
+  test("Profile full_name matches Shreyas Reddy", function() {
     const body = res.getBody();
-    expect(body.profile.full_name).to.equal("Chemakoora Shreyas Reddy");
-    expect(body.flagship_projects.length).to.equal(6);
+    expect(body.profile.full_name).to.equal("Shreyas Reddy");
+    expect(body.flagship_projects.length).to.equal(5);
   });
 
   test("Cleartext PII is strictly absent from public payload", function() {

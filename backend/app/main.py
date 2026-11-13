@@ -2,6 +2,7 @@ import json
 import logging
 import time
 import uuid
+from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -82,18 +83,35 @@ async def security_perimeter_middleware(request: Request, call_next):
             pass
 
     if request.method in {"POST", "PUT", "PATCH"}:
-        body = await request.body()
-        if len(body) > max_bytes:
-            resp = JSONResponse(
-                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-                content={
-                    "error_code": "PAYLOAD_TOO_LARGE",
-                    "message": f"Request body exceeds maximum allowed size of {max_bytes} bytes.",
-                    "request_id": request_id,
-                },
-            )
-            _apply_security_headers(resp, request_id)
-            return resp
+        body_chunks = []
+        bytes_received = 0
+        async for chunk in request.stream():
+            bytes_received += len(chunk)
+            if bytes_received > max_bytes:
+                resp = JSONResponse(
+                    status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                    content={
+                        "error_code": "PAYLOAD_TOO_LARGE",
+                        "message": f"Request body exceeds maximum allowed size of {max_bytes} bytes.",
+                        "request_id": request_id,
+                    },
+                )
+                _apply_security_headers(resp, request_id)
+                return resp
+            body_chunks.append(chunk)
+
+        buffered_body = b"".join(body_chunks)
+        has_sent = False
+
+        async def receive() -> dict[str, Any]:
+            nonlocal has_sent
+            if not has_sent:
+                has_sent = True
+                return {"type": "http.request", "body": buffered_body, "more_body": False}
+            return {"type": "http.disconnect"}
+
+        request._receive = receive  # type: ignore[method-assign]
+        request._body = buffered_body
 
     response = await call_next(request)
     _apply_security_headers(response, request_id)

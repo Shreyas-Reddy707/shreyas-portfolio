@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import hmac
 import ipaddress
@@ -27,13 +28,17 @@ _DEV_DUMMY_TOKENS = {
 
 
 def extract_client_ip(request: Request) -> str:
-    """Extract normalized client IP preferring Cloudflare CF-Connecting-IP."""
+    """Extract normalized client IP with proxy validation."""
+    client_host = request.client.host if request.client and request.client.host else "127.0.0.1"
     cf_ip = request.headers.get("CF-Connecting-IP")
     if cf_ip:
-        return cf_ip.strip()
-    if request.client and request.client.host:
-        return request.client.host
-    return "127.0.0.1"
+        candidate = cf_ip.strip()
+        try:
+            ipaddress.ip_address(candidate)
+            return candidate
+        except ValueError:
+            pass
+    return client_host
 
 
 def hash_client_ip(request: Request) -> str:
@@ -75,6 +80,50 @@ async def verify_github_webhook_signature(request: Request) -> bytes:
             },
         )
     return raw_body
+
+
+async def validate_outbound_url_async(url: str) -> str:
+    """Validate outbound URL against strict HTTPS, host allowlist, and SSRF IP rules asynchronously."""
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+
+    if (
+        settings.APP_ENV == "development"
+        and settings.AI_PROVIDER == "ollama"
+        and parsed.scheme == "http"
+        and host == "localhost"
+        and parsed.port == 11434
+    ):
+        return url
+
+    if parsed.scheme != "https":
+        raise ValueError(f"Outbound URL must use https:// scheme: {url}")
+
+    if host not in ALLOWED_OUTBOUND_HOSTS:
+        raise ValueError(f"Outbound host '{host}' is not in ALLOWED_OUTBOUND_HOSTS.")
+
+    loop = asyncio.get_running_loop()
+    try:
+        addr_info = await asyncio.wait_for(
+            loop.getaddrinfo(host, parsed.port or 443, type=socket.SOCK_STREAM),
+            timeout=3.0,
+        )
+    except (socket.gaierror, TimeoutError) as exc:
+        raise ValueError(f"DNS resolution failed or timed out for '{host}'.") from exc
+
+    for entry in addr_info:
+        ip_str = entry[4][0]
+        ip_obj = ipaddress.ip_address(ip_str)
+        if (
+            ip_obj.is_private
+            or ip_obj.is_loopback
+            or ip_obj.is_link_local
+            or ip_obj.is_multicast
+            or ip_obj.is_reserved
+        ):
+            raise ValueError(f"Blocked SSRF target IP '{ip_str}' for host '{host}'.")
+
+    return url
 
 
 def validate_outbound_url(url: str) -> str:
@@ -136,7 +185,7 @@ async def verify_turnstile_token(token: str, remote_ip: str | None = None) -> bo
         if settings.TURNSTILE_SECRET_KEY == _LOCAL_DEV_TEST_SECRET and len(cleaned) >= 10:
             return True
 
-    verify_url = validate_outbound_url("https://challenges.cloudflare.com/turnstile/v0/siteverify")
+    verify_url = await validate_outbound_url_async("https://challenges.cloudflare.com/turnstile/v0/siteverify")
     payload = {
         "secret": settings.TURNSTILE_SECRET_KEY,
         "response": cleaned,

@@ -241,13 +241,19 @@ function ZeroTrustShieldVisualizer({
           const isBreachedLayer = mode === "attack" && idx === 2;
 
           return (
-            <div
+            <button
+              type="button"
               key={layer.id || idx}
+              aria-pressed={isActive}
               onClick={() => {
                 setActiveLayerIndex(idx);
                 setIsPaused(true);
               }}
-              className={`cursor-pointer rounded-xl border p-2.5 transition-all ${
+              onFocus={() => {
+                setActiveLayerIndex(idx);
+                setIsPaused(true);
+              }}
+              className={`w-full text-left cursor-pointer rounded-xl border p-2.5 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanPulse focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F17] ${
                 isBreachedLayer
                   ? "border-rose-500 bg-rose-500/15 shadow-[0_0_20px_rgba(244,63,94,0.3)] scale-[1.01]"
                   : isQuarantined
@@ -285,7 +291,7 @@ function ZeroTrustShieldVisualizer({
                     : layer.detail}
                 </p>
               )}
-            </div>
+            </button>
           );
         })}
       </div>
@@ -384,13 +390,15 @@ function DataMindWorkbenchVisualizer({
           {nodes.map((node, idx) => {
             const isSelected = selectedNode === idx;
             return (
-              <div
+              <button
+                type="button"
                 key={node.id}
+                aria-pressed={isSelected}
                 onClick={() => {
                   setSelectedNode(idx);
                   notifyCanvas(idx, node.label);
                 }}
-                className={`cursor-pointer rounded-lg border p-2 text-center transition-all ${
+                className={`cursor-pointer rounded-lg border p-2 text-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emeraldSignal focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F17] ${
                   isSelected
                     ? "border-emeraldSignal bg-emeraldSignal/10 shadow-[0_0_14px_rgba(16,185,129,0.25)]"
                     : "border-hairline bg-surface/60 hover:border-slate-500"
@@ -406,7 +414,7 @@ function DataMindWorkbenchVisualizer({
                 <p className="text-[9px] font-mono text-slate-400 truncate">
                   {node.sub}
                 </p>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -903,13 +911,15 @@ function TelarcFunnelVisualizer({
         {modalities.map((m, idx) => {
           const isSelected = selectedModality === idx;
           return (
-            <div
+            <button
+              type="button"
               key={m.id}
+              aria-pressed={isSelected}
               onClick={() => {
                 setSelectedModality(idx);
                 notifyCanvas(idx, m.name);
               }}
-              className={`cursor-pointer rounded-xl border p-2.5 transition-all font-mono ${
+              className={`w-full text-left cursor-pointer rounded-xl border p-2.5 transition-all font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanPulse focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F17] ${
                 isSelected
                   ? "border-cyanPulse bg-cyanPulse/10 shadow-[0_0_14px_rgba(0,240,255,0.2)]"
                   : "border-hairline bg-surface/50 hover:border-slate-500"
@@ -920,7 +930,7 @@ function TelarcFunnelVisualizer({
                 <span className="font-bold text-slate-200">{m.samples}</span>
               </div>
               <p className="text-[11px] font-semibold text-slate-300 mt-1 truncate">{m.name}</p>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -1327,6 +1337,16 @@ function ColabNotebookVisualizer({
 }) {
   const [activeStep, setActiveStep] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     notifyCanvas(activeStep, "colab_step");
@@ -1375,15 +1395,19 @@ function ColabNotebookVisualizer({
   };
 
   const handleRunAll = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
     setIsRunning(true);
     let step = 0;
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       step++;
       if (step < stages.length) {
         setActiveStep(step);
         notifyCanvas(step, stages[step].name);
       } else {
-        clearInterval(interval);
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
         setIsRunning(false);
       }
     }, 600);
@@ -1512,6 +1536,8 @@ function ArchitectureDagVisualizer({
     { id: "N4", label: "Verified Output", sub: "Live Telemetry", accent: "#00F0FF" },
   ];
 
+  const [selectedNode, setSelectedNode] = useState(0);
+
   useEffect(() => {
     notifyCanvas(0, "dag_mount");
   }, []);
@@ -1531,23 +1557,35 @@ function ArchitectureDagVisualizer({
 
       {/* Connected 4-Node Flowchart */}
       <div className="space-y-2 mb-3">
-        {dagNodes.map((node, idx) => (
-          <div
-            key={node.id}
-            onClick={() => notifyCanvas(idx, node.label)}
-            className="flex items-center gap-3 p-2.5 rounded-xl border border-hairline bg-surface/50 hover:border-cyanPulse/60 transition cursor-pointer"
-          >
-            <span
-              className="w-2 h-2 rounded-full shrink-0 animate-pulse"
-              style={{ backgroundColor: node.accent }}
-            />
-            <div className="flex-1 flex items-center justify-between font-mono text-xs">
-              <span className="font-bold text-slate-200">{node.label}</span>
-              <span className="text-slate-400 text-[11px]">{node.sub}</span>
-            </div>
-            {idx < dagNodes.length - 1 && <ChevronRight className="h-3 w-3 text-slate-600" />}
-          </div>
-        ))}
+        {dagNodes.map((node, idx) => {
+          const isSelected = selectedNode === idx;
+          return (
+            <button
+              type="button"
+              key={node.id}
+              aria-pressed={isSelected}
+              onClick={() => {
+                setSelectedNode(idx);
+                notifyCanvas(idx, node.label);
+              }}
+              className={`w-full text-left flex items-center gap-3 p-2.5 rounded-xl border transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-cyanPulse focus-visible:ring-offset-2 focus-visible:ring-offset-[#0B0F17] ${
+                isSelected
+                  ? "border-cyanPulse bg-cyanPulse/10 shadow-[0_0_14px_rgba(0,240,255,0.2)]"
+                  : "border-hairline bg-surface/50 hover:border-cyanPulse/60"
+              }`}
+            >
+              <span
+                className="w-2 h-2 rounded-full shrink-0 animate-pulse"
+                style={{ backgroundColor: node.accent }}
+              />
+              <div className="flex-1 flex items-center justify-between font-mono text-xs">
+                <span className="font-bold text-slate-200">{node.label}</span>
+                <span className="text-slate-400 text-[11px]">{node.sub}</span>
+              </div>
+              {idx < dagNodes.length - 1 && <ChevronRight className="h-3 w-3 text-slate-600" />}
+            </button>
+          );
+        })}
       </div>
 
       {/* Summary Box */}

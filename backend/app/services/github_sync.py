@@ -1,17 +1,21 @@
+import base64
+import logging
 import re
 from datetime import UTC, datetime
 from typing import Any
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.redis_guard import invalidate_portfolio_cache
 from app.core.security import validate_outbound_url
-from app.models.portfolio import Project
+from app.models.portfolio import PortfolioEmbedding, Project
 from app.services.repo_explainer import generate_repo_explainer
 from app.services.seed_embeddings import upsert_record_embedding
+
+logger = logging.getLogger(__name__)
 
 _SLUG_CLEAN_RE = re.compile(r"[^a-z0-9-]+")
 
@@ -65,30 +69,36 @@ async def sync_github_repositories(
     repo_payloads: list[dict[str, Any]] | None = None,
 ) -> dict[str, int]:
     """Sync public non-fork GitHub repositories into Postgres & pgvector."""
-    if repo_payloads is None:
-        url = validate_outbound_url(
-            f"https://api.github.com/users/{settings.GITHUB_USERNAME}/repos"
-            "?sort=pushed&per_page=50"
-        )
-        headers = {
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        }
-        if settings.GITHUB_PAT and not settings.GITHUB_PAT.startswith("ghp_local_dev_placeholder"):
-            headers["Authorization"] = f"Bearer {settings.GITHUB_PAT}"
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    if settings.GITHUB_PAT and not settings.GITHUB_PAT.startswith("ghp_local_dev_placeholder"):
+        headers["Authorization"] = f"Bearer {settings.GITHUB_PAT}"
 
+    if repo_payloads is None:
+        repo_payloads = []
+        page = 1
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
-            resp = await client.get(url, headers=headers)
-            resp.raise_for_status()
-            repo_payloads = resp.json()
+            while True:
+                url = validate_outbound_url(
+                    f"https://api.github.com/users/{settings.GITHUB_USERNAME}/repos"
+                    f"?sort=pushed&per_page=50&page={page}"
+                )
+                resp = await client.get(url, headers=headers)
+                resp.raise_for_status()
+                items = resp.json()
+                if not items:
+                    break
+                repo_payloads.extend(items)
+                if len(items) < 50:
+                    break
+                page += 1
 
     flagship_updated = 0
     auto_synced = 0
 
     for repo in repo_payloads or []:
-        if repo.get("fork") or repo.get("private"):
-            continue
-
         repo_name = str(repo.get("name") or "").strip()
         if not repo_name:
             continue
@@ -101,7 +111,34 @@ async def sync_github_repositories(
             continue
 
         slug = _slugify_repo(repo_name)
+        target_slug = FLAGSHIP_REPO_NAME_MAP.get(slug, slug)
         github_repo_id = repo.get("id")
+
+        # If repo is marked private, remove it from public auto-synced projects
+        if repo.get("private"):
+            priv_proj = None
+            if github_repo_id is not None:
+                priv_proj = (
+                    await session.execute(select(Project).where(Project.github_repo_id == int(github_repo_id)))
+                ).scalar_one_or_none()
+            if priv_proj is None:
+                priv_proj = (
+                    await session.execute(select(Project).where(Project.slug == target_slug))
+                ).scalar_one_or_none()
+            if priv_proj is not None and priv_proj.is_auto_synced and not priv_proj.is_flagship:
+                await session.execute(
+                    delete(PortfolioEmbedding).where(
+                        PortfolioEmbedding.source_type == "project",
+                        PortfolioEmbedding.source_id == priv_proj.id,
+                    )
+                )
+                await session.delete(priv_proj)
+                await session.flush()
+            continue
+
+        if repo.get("fork"):
+            continue
+
         stars = max(0, int(repo.get("stargazers_count") or 0))
         forks = max(0, int(repo.get("forks_count") or 0))
         issues = max(0, int(repo.get("open_issues_count") or 0))
@@ -114,11 +151,30 @@ async def sync_github_repositories(
         readme_text = str(repo.get("readme_text") or "")
         readme_sha = repo.get("readme_sha")
 
-        target_slug = FLAGSHIP_REPO_NAME_MAP.get(slug, slug)
+        # Fetch README dynamically if not present in payload and PAT is available
+        if not readme_text and settings.GITHUB_PAT and not settings.GITHUB_PAT.startswith("ghp_local_dev_placeholder"):
+            try:
+                owner = (repo.get("owner") or {}).get("login") or settings.GITHUB_USERNAME
+                readme_url = validate_outbound_url(f"https://api.github.com/repos/{owner}/{repo_name}/readme")
+                async with httpx.AsyncClient(timeout=5.0, follow_redirects=False) as r_client:
+                    r_resp = await r_client.get(readme_url, headers=headers)
+                    if r_resp.status_code == 200:
+                        r_data = r_resp.json()
+                        readme_sha = r_data.get("sha")
+                        readme_text = base64.b64decode(r_data.get("content", "")).decode("utf-8", errors="replace")
+            except Exception as exc:
+                logger.debug("Failed to fetch README dynamically for %s: %s", repo_name, exc)
 
-        existing = (
-            await session.execute(select(Project).where(Project.slug == target_slug))
-        ).scalar_one_or_none()
+        # Lookup by stable Project.github_repo_id first before slug
+        existing = None
+        if github_repo_id is not None:
+            existing = (
+                await session.execute(select(Project).where(Project.github_repo_id == int(github_repo_id)))
+            ).scalar_one_or_none()
+        if existing is None:
+            existing = (
+                await session.execute(select(Project).where(Project.slug == target_slug))
+            ).scalar_one_or_none()
 
         if existing is not None and (target_slug in FLAGSHIP_REPO_NAME_MAP.values() or existing.is_flagship or not existing.is_auto_synced):
             # Clean up any stale auto-synced duplicate row with this github_repo_id or slug first
@@ -143,11 +199,15 @@ async def sync_github_repositories(
             existing.forks_count = forks
             existing.open_issues_count = issues
             existing.primary_language = language or existing.primary_language
+            existing.is_archived = bool(repo.get("archived", False))
             if html_url:
                 existing.github_url = html_url
             if github_repo_id is not None:
                 existing.github_repo_id = int(github_repo_id)
             existing.last_pushed_at = pushed_at
+            if readme_text:
+                existing.architecture_md = readme_text[:8000]
+                existing.readme_sha = readme_sha
 
             flagship_updated += 1
             continue
@@ -251,11 +311,7 @@ async def sync_github_repositories(
                         "accent": "#F59E0B",
                     },
                 ],
-                "before_after_metrics": [
-                    {"label": "Data Completeness", "before": "84.2%", "after": "100.0%", "delta": "+15.8%"},
-                    {"label": "Outlier Distortions", "before": "127 rows", "after": "0 rows", "delta": "Purged"},
-                    {"label": "Correlation Clarity (R²)", "before": "0.61", "after": "0.89", "delta": "+0.28"},
-                ],
+                "before_after_metrics": [],
             }
         else:
             visualizer_type = "architecture_flowchart_dag"
@@ -273,7 +329,7 @@ async def sync_github_repositories(
 
         if existing is None:
             project = Project(
-                slug=slug,
+                slug=target_slug,
                 github_repo_id=int(github_repo_id) if github_repo_id is not None else None,
                 title=repo_name,
                 tagline=description[:280],
@@ -325,6 +381,10 @@ async def sync_github_repositories(
             project.primary_language = language
             project.stars_count = stars
             project.forks_count = forks
+            project.is_archived = bool(repo.get("archived", False))
+            if readme_text:
+                project.architecture_md = readme_text[:8000]
+                project.readme_sha = readme_sha
             cfg = dict(project.model_3d_config or {})
             cfg["visualizer_type"] = visualizer_type
             cfg["why_built"] = why_built
