@@ -131,14 +131,28 @@ async def set_cached_json(
 
 
 async def invalidate_portfolio_cache() -> None:
-    """Purge cached public portfolio and manifest payloads and local in-memory context cache."""
+    """Purge cached public portfolio and manifest payloads and advance shared cache generation."""
     client = await get_redis()
     await client.delete("cache:public:portfolio:v1", "cache:public:manifest:v1")
+    try:
+        await client.incr("cache:generation:portfolio")
+    except Exception as exc:
+        logger.debug("Failed to advance portfolio cache generation: %s", exc)
     try:
         from app.services.rag_agent import clear_portfolio_data_cache
         clear_portfolio_data_cache()
     except Exception as exc:
         logger.debug("Failed to clear local portfolio cache: %s", exc)
+
+
+async def get_portfolio_cache_generation() -> int:
+    """Retrieve the current shared portfolio cache generation counter from Redis."""
+    try:
+        client = await get_redis()
+        val = await client.get("cache:generation:portfolio")
+        return int(val) if val else 0
+    except Exception:
+        return 0
 
 
 async def acquire_webhook_delivery_lock(

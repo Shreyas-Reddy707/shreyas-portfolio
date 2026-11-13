@@ -165,18 +165,28 @@ async def sync_github_repositories(
             except Exception as exc:
                 logger.debug("Failed to fetch README dynamically for %s: %s", repo_name, exc)
 
-        # Lookup by stable Project.github_repo_id first before slug
+        # For mapped repositories, resolve the curated canonical project first by target_slug
         existing = None
-        if github_repo_id is not None:
+        is_mapped_repo = bool(
+            slug in FLAGSHIP_REPO_NAME_MAP
+            or target_slug in FLAGSHIP_REPO_NAME_MAP.values()
+        )
+        if is_mapped_repo:
+            existing = (
+                await session.execute(select(Project).where(Project.slug == target_slug))
+            ).scalar_one_or_none()
+
+        if existing is None and github_repo_id is not None:
             existing = (
                 await session.execute(select(Project).where(Project.github_repo_id == int(github_repo_id)))
             ).scalar_one_or_none()
+
         if existing is None:
             existing = (
                 await session.execute(select(Project).where(Project.slug == target_slug))
             ).scalar_one_or_none()
 
-        if existing is not None and (target_slug in FLAGSHIP_REPO_NAME_MAP.values() or existing.is_flagship or not existing.is_auto_synced):
+        if existing is not None and (is_mapped_repo or existing.is_flagship or not existing.is_auto_synced):
             # Clean up any stale auto-synced duplicate row with this github_repo_id or slug first
             if github_repo_id is not None or slug != target_slug:
                 conditions = [Project.id != existing.id]
@@ -192,6 +202,12 @@ async def sync_github_repositories(
                         await session.execute(select(Project).where(*conditions))
                     ).scalars().all()
                     for d in stale_dups:
+                        await session.execute(
+                            delete(PortfolioEmbedding).where(
+                                PortfolioEmbedding.source_type == "project",
+                                PortfolioEmbedding.source_id == d.id,
+                            )
+                        )
                         await session.delete(d)
                     await session.flush()
 
@@ -411,7 +427,12 @@ async def sync_github_repositories(
         )
         auto_synced += 1
 
-    await session.commit()
+    try:
+        await session.commit()
+    except Exception as exc:
+        await session.rollback()
+        raise exc
+
     await invalidate_portfolio_cache()
     return {"flagship_updated": flagship_updated, "auto_synced": auto_synced}
 

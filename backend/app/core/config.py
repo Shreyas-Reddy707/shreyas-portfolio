@@ -69,6 +69,8 @@ class Settings(BaseSettings):
     @classmethod
     def validate_cryptographic_secrets(cls, v: str) -> str:
         trimmed = v.strip()
+        if len(trimmed) < 32:
+            raise ValueError("Secret must contain at least 32 characters after trimming whitespace.")
         if len(set(trimmed)) < 4:
             raise ValueError("Secret has insufficient character entropy (repeated characters detected).")
         known_placeholders = {

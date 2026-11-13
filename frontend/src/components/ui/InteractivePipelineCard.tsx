@@ -58,12 +58,16 @@ export function InteractivePipelineCard({
       : DEFAULT_PIPELINE_LAYERS;
 
   const [activeLayerIndex, setActiveLayerIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const isPaused = isHovered || isFocused;
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const selectLayer = (idx: number, isExplicit = false) => {
     setActiveLayerIndex(idx);
-    setIsPaused(true);
+    if (isExplicit) {
+      setIsFocused(true);
+    }
     if (typeof window !== "undefined") {
       window.dispatchEvent(
         new CustomEvent("portfolio:active-layer", {
@@ -110,14 +114,14 @@ export function InteractivePipelineCard({
     <div
       className="relative flex flex-col justify-between rounded-2xl border border-slate-800/80 bg-[#0B0F17]/95 p-5 shadow-2xl backdrop-blur transition-all duration-300"
       onMouseEnter={() => {
-        setIsPaused(true);
+        setIsHovered(true);
         selectLayer(activeLayerIndex, true);
       }}
-      onMouseLeave={() => setIsPaused(false)}
-      onFocus={() => setIsPaused(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onFocus={() => setIsFocused(true)}
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget)) {
-          setIsPaused(false);
+          setIsFocused(false);
         }
       }}
     >

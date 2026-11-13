@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import uuid
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
@@ -69,11 +70,12 @@ async def receive_github_webhook(
             select(WebhookDelivery).where(WebhookDelivery.delivery_id == delivery_id)
         )
     ).scalar_one_or_none()
-    if existing_delivery is not None and existing_delivery.status != "rejected_hmac":
+    if existing_delivery is not None and existing_delivery.status in {"processed", "ignored"}:
         return {"status": "duplicate_ignored", "delivery_id": delivery_id}
 
     repo_full_name = None
     repo_obj = None
+    touches_manifest = False
     try:
         parsed = json.loads(raw_body.decode("utf-8"))
         repo = parsed.get("repository")
@@ -81,8 +83,19 @@ async def receive_github_webhook(
             repo_full_name = repo.get("full_name")
             if repo.get("name"):
                 repo_obj = repo
+        commits = parsed.get("commits")
+        if isinstance(commits, list):
+            for c in commits:
+                all_files = (c.get("added") or []) + (c.get("modified") or []) + (c.get("removed") or [])
+                if any("portfolio_data.json" in str(f) for f in all_files):
+                    touches_manifest = True
+                    break
     except Exception:
         repo_full_name = None
+
+    is_portfolio_repo = bool(
+        repo_full_name and "shreyas-portfolio" in repo_full_name.lower()
+    )
 
     if existing_delivery is not None:
         delivery_record = existing_delivery
@@ -106,22 +119,48 @@ async def receive_github_webhook(
     try:
         if event_type in {"push", "repository", "release"} and repo_obj is not None:
             await sync_github_repositories(db, repo_payloads=[repo_obj])
-        else:
-            await invalidate_portfolio_cache()
+
+        if touches_manifest or is_portfolio_repo:
+            manifest_path = Path(__file__).resolve().parents[4] / "content" / "portfolio_data.json"
+            if manifest_path.exists():
+                try:
+                    from scripts.sync_portfolio_content import sync_database_from_manifest
+
+                    await sync_database_from_manifest(manifest_path)
+                except Exception as m_err:
+                    logger.warning("Manifest sync error during webhook processing: %s", m_err)
+
+        await invalidate_portfolio_cache()
 
         delivery_record.status = "processed"
+        delivery_record.error_detail = None
         await db.commit()
     except Exception as exc:
-        delivery_record.status = "failed"
-        delivery_record.error_detail = str(exc)[:500]
-        await db.commit()
         try:
-            from app.core.redis_guard import get_redis
+            await db.rollback()
+        except Exception as rb_err:
+            logger.debug("Database rollback error: %s", rb_err)
 
-            client = await get_redis()
-            await client.delete(f"webhook:lock:{delivery_id}")
-        except Exception as redis_err:
-            logger.debug("Failed to release webhook delivery lock: %s", redis_err)
-        raise
+        try:
+            rec = (
+                await db.execute(
+                    select(WebhookDelivery).where(WebhookDelivery.delivery_id == delivery_id[:64])
+                )
+            ).scalar_one_or_none()
+            if rec:
+                rec.status = "failed"
+                rec.error_detail = str(exc)[:500]
+                await db.commit()
+        except Exception as rec_err:
+            logger.warning("Failed to record webhook delivery failure: %s", rec_err)
+        finally:
+            try:
+                from app.core.redis_guard import get_redis
+
+                client = await get_redis()
+                await client.delete(f"webhook:lock:{delivery_id}")
+            except Exception as redis_err:
+                logger.debug("Failed to release webhook delivery lock: %s", redis_err)
+        raise exc
 
     return {"status": "accepted", "delivery_id": delivery_id}

@@ -1,12 +1,13 @@
 import logging
+import re
 from typing import Any
 
 import httpx
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.redis_guard import consume_ai_tokens
+from app.core.redis_guard import consume_ai_tokens, get_portfolio_cache_generation
 from app.core.security import validate_outbound_url
 from app.models.portfolio import (
     CandidateProfile,
@@ -22,20 +23,24 @@ logger = logging.getLogger(__name__)
 
 # In-memory cache for full portfolio context string and entity catalog
 _PORTFOLIO_DATA_CACHE: tuple[str, list[dict[str, Any]]] | None = None
+_LOCAL_CACHE_GENERATION: int = -1
 
 
 def clear_portfolio_data_cache() -> None:
     """Clear the in-memory cached portfolio context and entity catalog."""
-    global _PORTFOLIO_DATA_CACHE
+    global _PORTFOLIO_DATA_CACHE, _LOCAL_CACHE_GENERATION
     _PORTFOLIO_DATA_CACHE = None
+    _LOCAL_CACHE_GENERATION = -1
 
 
 async def build_full_portfolio_context(
     session: AsyncSession,
 ) -> tuple[str, list[dict[str, Any]]]:
     """Build a comprehensive, structured text summary and complete entity catalog for Shreyas's portfolio."""
-    global _PORTFOLIO_DATA_CACHE
-    if _PORTFOLIO_DATA_CACHE:
+    global _PORTFOLIO_DATA_CACHE, _LOCAL_CACHE_GENERATION
+
+    shared_gen = await get_portfolio_cache_generation()
+    if _PORTFOLIO_DATA_CACHE is not None and _LOCAL_CACHE_GENERATION == shared_gen:
         return _PORTFOLIO_DATA_CACHE
 
     profile = (await session.execute(select(CandidateProfile))).scalar_one_or_none()
@@ -231,6 +236,7 @@ async def build_full_portfolio_context(
         sections.append("\n".join(cert_lines))
 
     _PORTFOLIO_DATA_CACHE = ("\n\n".join(sections), catalog)
+    _LOCAL_CACHE_GENERATION = shared_gen
     return _PORTFOLIO_DATA_CACHE
 
 
@@ -513,24 +519,41 @@ async def answer_recruiter_query(
     import asyncio
 
     rows: list[PortfolioEmbedding] = []
-    full_context, catalog = await build_full_portfolio_context(session)
+    full_context = ""
+    catalog: list[dict[str, Any]] = []
 
     try:
-        # Enforce strict shared 10-second total deadline covering embedding and LLM generation
+        # Enforce strict shared 10-second total deadline covering context loading, embedding, and LLM generation
         async with asyncio.timeout(10.0):
+            full_context, catalog = await build_full_portfolio_context(session)
+
             has_embedding_budget = await consume_ai_tokens(50)
             if has_embedding_budget:
                 query_vec = await compute_embedding_768(query)
+                stmt = select(PortfolioEmbedding)
+                if category_filter:
+                    stmt = stmt.where(PortfolioEmbedding.source_type == category_filter)
+                stmt = stmt.order_by(PortfolioEmbedding.embedding.cosine_distance(query_vec)).limit(4)
+                rows = list((await session.execute(stmt)).scalars().all())
             else:
-                from app.services.repo_explainer import _deterministic_offline_embedding_768
-                query_vec = _deterministic_offline_embedding_768(query)
-
-            stmt = select(PortfolioEmbedding)
-            if category_filter:
-                stmt = stmt.where(PortfolioEmbedding.source_type == category_filter)
-            stmt = stmt.order_by(PortfolioEmbedding.embedding.cosine_distance(query_vec)).limit(4)
-
-            rows = list((await session.execute(stmt)).scalars().all())
+                # Embedding budget exhausted: do NOT query offline pseudo-embedding against Gemini/Nomic dense vectors!
+                # Use lexical search (SQL ILIKE matching) on chunk_text & title
+                stmt = select(PortfolioEmbedding)
+                if category_filter:
+                    stmt = stmt.where(PortfolioEmbedding.source_type == category_filter)
+                keywords = [w for w in re.split(r"\W+", query.lower()) if len(w) >= 3]
+                if keywords:
+                    conditions = [
+                        or_(
+                            PortfolioEmbedding.chunk_text.ilike(f"%{kw}%"),
+                            PortfolioEmbedding.title.ilike(f"%{kw}%"),
+                        )
+                        for kw in keywords[:5]
+                    ]
+                    stmt = stmt.where(or_(*conditions)).limit(4)
+                else:
+                    stmt = stmt.limit(4)
+                rows = list((await session.execute(stmt)).scalars().all())
 
             # Combine master context with the top pgvector specific chunks
             context_chunks = [full_context]

@@ -2,7 +2,6 @@ import json
 import logging
 import time
 import uuid
-from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -101,16 +100,6 @@ async def security_perimeter_middleware(request: Request, call_next):
             body_chunks.append(chunk)
 
         buffered_body = b"".join(body_chunks)
-        has_sent = False
-
-        async def receive() -> dict[str, Any]:
-            nonlocal has_sent
-            if not has_sent:
-                has_sent = True
-                return {"type": "http.request", "body": buffered_body, "more_body": False}
-            return {"type": "http.disconnect"}
-
-        request._receive = receive  # type: ignore[method-assign]
         request._body = buffered_body
 
     response = await call_next(request)
