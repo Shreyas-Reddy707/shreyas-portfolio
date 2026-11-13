@@ -1,0 +1,51 @@
+name: Sync GitHub Profile README
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "content/portfolio_data.json"
+  repository_dispatch:
+    types: [portfolio-updated]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  sync-profile-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout portfolio repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Render PORTFOLIO-SYNC Markdown block
+        run: |
+          python backend/scripts/render_profile_readme.py \
+            --manifest content/portfolio_data.json \
+            --output /tmp/profile_sync_block.md
+
+      - name: Update Profile README if PAT is configured
+        if: ${{ secrets.PROFILE_README_PAT != '' }}
+        env:
+          PROFILE_README_PAT: ${{ secrets.PROFILE_README_PAT }}
+          GITHUB_USERNAME: ${{ vars.GITHUB_USERNAME || 'shreyas-reddy' }}
+        run: |
+          git clone "https://x-access-token:${PROFILE_README_PAT}@github.com/${GITHUB_USERNAME}/${GITHUB_USERNAME}.git" /tmp/profile-repo
+          python backend/scripts/render_profile_readme.py \
+            --manifest content/portfolio_data.json \
+            --target-readme /tmp/profile-repo/README.md
+          cd /tmp/profile-repo
+          if ! git diff --quiet README.md; then
+            git config user.name "portfolio-gitops-bot"
+            git config user.email "portfolio-bot@users.noreply.github.com"
+            git add README.md
+            git commit -m "chore(sync): update portfolio showcase block"
+            git push origin HEAD
+          fi
+

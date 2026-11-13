@@ -1,0 +1,29 @@
+meta {
+  name: 06 Agent Rate Limit Trip 429
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/agent/chat
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "query": "Summarize Shreyas Viswam.ai Tech Lead experience",
+    "turnstile_token": "{{turnstileTestToken}}"
+  }
+}
+
+tests {
+  test("Security header X-Content-Type-Options is nosniff", function() {
+    expect(res.getHeader("x-content-type-options")).to.equal("nosniff");
+  });
+}
+

@@ -1,0 +1,36 @@
+# Chemakoora Shreyas Reddy — Engineering Portfolio Summary (/llms.txt)
+
+> AI Systems & Full-Stack Engineer | Zero-Trust RAG & Autonomous Agents
+> Location: Hyderabad, Telangana, India
+> Education: B.Tech in Computer Science & Engineering (Artificial Intelligence), ICFAI Tech (2023–2027)
+
+## Leadership & Experience
+- **Tech Lead — AI & Software Development Intern | Viswam.ai (Jun 2025 – Aug 2025):** Directed technical strategy, architecture reviews, and AI engineering workflows across 200+ interns.
+- **Core Technical Lead | Team CODEX (Jul 2025 – Present):** Spearheaded full-stack, AI agent, and cybersecurity hackathon architectures.
+- **B.Tech CSE (AI) | ICFAI Tech (2023–2027):** Specializing in Artificial Intelligence, Autonomous Agents, Computer Vision, and Distributed Systems.
+
+## Flagship Engineering Systems
+1. **SecureRAG:** 5-Layer Zero-Trust Multi-Agent RAG Pipeline with Qdrant hybrid retrieval and 128-bit hex nonce prompt delimiters.
+2. **DataMind:** Autonomous AI Data Intelligence Platform built with Next.js 15, FastAPI, PostgreSQL + pgvector, Ollama, Pytest, and Playwright.
+3. **Project Sentinel:** Real-Time User & Entity Behavior Analytics (UEBA) threat detection framework for Cybersecurity Hackathon 2025.
+4. **Denoising Prior to Edge Detection:** Interactive OpenCV/Gradio computer vision laboratory measuring Canny edge accuracy, SSIM metrics, and 3D intensity topography.
+5. **Telugu Digital Archive Portal (telarc):** Open-source (MIT License) regional multimedia archiving web application on Hugging Face Spaces & Streamlit.
+6. **Folkbattle:** Community storytelling platform built for SOAI Hackathon 2025 on Code Swecha.
+
+## Hackathons
+- Smart India Hackathon (SIH) 2025 — Technical Lead (Team CODEX)
+- Cybersecurity Hackathon 2025 — Lead Security & UEBA Architect (Project Sentinel)
+- SOAI Hackathon 2025 — Lead Application Developer (Folkbattle)
+
+## Verified Certifications
+- Microsoft Certified: Azure AI Fundamentals (AI-901)
+- Google Cloud Gen AI Academy (APAC Edition)
+- NVIDIA DLI: Autonomous Robotics & Prompt Engineering
+- Kaggle & Google: AI Agents Intensive Course & Capstone
+- FutureSkills Prime (NASSCOM): Data Processing and Visualisation
+- IBM SkillsBuild & Infosys Springboard: Cybersecurity Fundamentals & Big Data / Hadoop 3
+
+## Direct Links
+- LinkedIn: https://www.linkedin.com/in/shreyas-reddy-8a7512285
+- Portfolio Routes: /, /projects, /experience, /hackathons, /certificates
+

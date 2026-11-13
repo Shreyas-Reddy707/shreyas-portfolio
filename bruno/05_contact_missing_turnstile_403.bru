@@ -1,0 +1,35 @@
+meta {
+  name: 05 Contact Reveal Invalid Turnstile 403
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/public/contact-reveal
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "turnstile_token": "invalid_bot_token"
+  }
+}
+
+tests {
+  test("Invalid Turnstile token is rejected with 403 Forbidden", function() {
+    expect(res.getStatus()).to.equal(403);
+    expect(res.getBody().error_code).to.equal("TURNSTILE_VERIFICATION_FAILED");
+  });
+
+  test("No cleartext PII leaked on 403", function() {
+    const raw = JSON.stringify(res.getBody());
+    expect(raw).to.not.include("shreyas.chemakoora@gmail.com");
+    expect(raw).to.not.include("+91 9346759117");
+  });
+}
+

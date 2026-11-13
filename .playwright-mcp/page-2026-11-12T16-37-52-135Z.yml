@@ -1,0 +1,195 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - link "SHREYAS.AI// MULTI-AGENT ARCHITECT" [ref=e7] [cursor=pointer]:
+          - /url: /
+        - navigation [ref=e17]:
+          - link "Overview" [ref=e18] [cursor=pointer]:
+            - /url: /
+          - link "Experience" [ref=e19] [cursor=pointer]:
+            - /url: /experience
+          - link "Lab" [ref=e20] [cursor=pointer]:
+            - /url: /lab
+          - link "Arsenal" [ref=e21] [cursor=pointer]:
+            - /url: /arsenal
+          - link "Vault" [ref=e22] [cursor=pointer]:
+            - /url: /vault
+          - link "Contact" [ref=e23] [cursor=pointer]:
+            - /url: /contact
+          - link "Resume ↓" [ref=e24] [cursor=pointer]:
+            - /url: https://agentic-reddy--38jfex96.preview.emergentagent.com/api/resume
+    - main [ref=e25]:
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]: AVAILABLE FOR ALL AI & TECH ROLES
+          - heading "SHREYAS REDDY." [level=1] [ref=e35]:
+            - generic [ref=e36]:
+              - generic [ref=e37]: SHREYAS
+              - generic [ref=e39]: REDDY.
+          - paragraph [ref=e42]: AI & GENAI ENGINEER // MULTI-AGENT SYSTEMS ARCHITECT // FORWARD DEPLOYED ENGINEER
+          - paragraph [ref=e43]: Engineering zero-trust multi-agent architectures, autonomous data intelligence platforms, and production full-stack systems.
+          - generic [ref=e44]:
+            - link "Explore 3D Architecture Lab" [ref=e45] [cursor=pointer]:
+              - /url: /lab
+            - button "Interactive Terminal" [ref=e48] [cursor=pointer]
+            - link "Download Resume PDF" [ref=e52] [cursor=pointer]:
+              - /url: https://agentic-reddy--38jfex96.preview.emergentagent.com/api/resume
+            - generic [ref=e56]:
+              - link "GitHub" [ref=e57] [cursor=pointer]:
+                - /url: https://github.com/Shreyas-Reddy707
+              - link "LinkedIn" [ref=e61] [cursor=pointer]:
+                - /url: https://www.linkedin.com/in/shreyas-reddy-8a7512285
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - generic [ref=e71]: NEURAL CORE // PRISMATIC MESH — LIVE
+            - generic [ref=e72]: MULTI-AGENT TOPOLOGY · 24 NODES · MOUSE-REACTIVE
+            - generic [ref=e73]: "RENDER: WEBGL"
+          - generic [ref=e76]:
+            - generic [ref=e77]:
+              - generic [ref=e82]: shreyas@ai-studio — zsh
+              - generic [ref=e83]: LIVE
+            - generic [ref=e85]:
+              - generic [ref=e86]: "SHREYAS.AI // interactive command interface — type `help` to begin"
+              - generic [ref=e87]:
+                - generic [ref=e88]: shreyas@ai-studio:~$
+                - textbox "Terminal command input" [ref=e89]
+                - generic [ref=e90]: ▊
+            - generic [ref=e91]:
+              - button "help" [ref=e92] [cursor=pointer]
+              - button "whoami" [ref=e93] [cursor=pointer]
+              - button "projects" [ref=e94] [cursor=pointer]
+              - button "skills" [ref=e95] [cursor=pointer]
+              - button "experience" [ref=e96] [cursor=pointer]
+              - button "contact" [ref=e97] [cursor=pointer]
+      - generic [ref=e99]:
+        - generic [ref=e100]:
+          - generic [ref=e101]: COMMAND DECK
+          - heading "System highlights" [level=2] [ref=e106]
+          - paragraph [ref=e108]: Four flagship builds, one deployment zone. Every metric below is pulled from real, shipped engineering work.
+        - generic [ref=e109]:
+          - link "SecureRAG Zero-Trust RAG Defense 5-layer multi-agent pipeline. Indirect prompt injection, PoisonedRAG and namespace traversal — neutralized. 0.0% ATTACK SUCCESS RATE" [ref=e113] [cursor=pointer]:
+            - /url: /lab
+            - generic [ref=e114]:
+              - heading "SecureRAG" [level=3] [ref=e123]
+              - paragraph [ref=e124]: Zero-Trust RAG Defense
+              - paragraph [ref=e125]: 5-layer multi-agent pipeline. Indirect prompt injection, PoisonedRAG and namespace traversal — neutralized.
+              - generic [ref=e126]:
+                - generic [ref=e127]: 0.0%
+                - generic [ref=e128]: ATTACK SUCCESS RATE
+          - link "DataMind Autonomous Data Intelligence Six specialist agents, self-learning memory loop, three-tier chat engine. 6 SPECIALIST AGENTS" [ref=e132] [cursor=pointer]:
+            - /url: /lab
+            - generic [ref=e133]:
+              - heading "DataMind" [level=3] [ref=e142]
+              - paragraph [ref=e143]: Autonomous Data Intelligence
+              - paragraph [ref=e144]: Six specialist agents, self-learning memory loop, three-tier chat engine.
+              - generic [ref=e145]:
+                - generic [ref=e146]: "6"
+                - generic [ref=e147]: SPECIALIST AGENTS
+          - link "ConstructPulse Workforce Intelligence QR check-ins, live occupancy, one-tap emergency mustering. 3 ROLE DASHBOARDS" [ref=e151] [cursor=pointer]:
+            - /url: /lab
+            - generic [ref=e152]:
+              - heading "ConstructPulse" [level=3] [ref=e162]
+              - paragraph [ref=e163]: Workforce Intelligence
+              - paragraph [ref=e164]: QR check-ins, live occupancy, one-tap emergency mustering.
+              - generic [ref=e165]:
+                - generic [ref=e166]: "3"
+                - generic [ref=e167]: ROLE DASHBOARDS
+          - link "CrisisPulse Geospatial Crisis Dashboard Live global emergencies aggregated via Wikimedia APIs, clustered on Folium maps. LIVE EVENT STREAMING" [ref=e171] [cursor=pointer]:
+            - /url: /lab
+            - generic [ref=e172]:
+              - heading "CrisisPulse" [level=3] [ref=e181]
+              - paragraph [ref=e182]: Geospatial Crisis Dashboard
+              - paragraph [ref=e183]: Live global emergencies aggregated via Wikimedia APIs, clustered on Folium maps.
+              - generic [ref=e184]:
+                - generic [ref=e185]: LIVE
+                - generic [ref=e186]: EVENT STREAMING
+          - generic [ref=e190]:
+            - heading "Education" [level=3] [ref=e196]
+            - paragraph [ref=e197]: ICFAI Tech University
+            - paragraph [ref=e198]: B.Tech, Computer Science & Engineering (Specialization in Artificial Intelligence). CGPA 7.24 / 10.
+            - generic [ref=e199]:
+              - generic [ref=e200]: 2023–27
+              - generic [ref=e201]: B.TECH CSE (AI)
+          - link "Experience Limelite (FDE) · VISWAM.AI (Tech Lead) Forward Deployed Engineer @ Limelite Constructions NZ — CRM migration, PDF doc engine. Tech Lead @ VISWAM.AI (Swecha & IIIT-H) — led a 20-member team building the Telugu NLP corpus. 2 ROLES · 2025–2026" [ref=e205] [cursor=pointer]:
+            - /url: /experience
+            - generic [ref=e206]:
+              - heading "Experience" [level=3] [ref=e216]
+              - paragraph [ref=e217]: Limelite (FDE) · VISWAM.AI (Tech Lead)
+              - paragraph [ref=e218]: Forward Deployed Engineer @ Limelite Constructions NZ — CRM migration, PDF doc engine. Tech Lead @ VISWAM.AI (Swecha & IIIT-H) — led a 20-member team building the Telugu NLP corpus.
+              - generic [ref=e219]:
+                - generic [ref=e220]: "2"
+                - generic [ref=e221]: ROLES · 2025–2026
+      - generic [ref=e225]:
+        - generic [ref=e226]:
+          - generic [ref=e227]: MULTI-AGENT SYSTEMS
+          - generic [ref=e230]: ZERO-TRUST RAG
+          - generic [ref=e233]: LANGGRAPH
+          - generic [ref=e236]: FORWARD DEPLOYED
+          - generic [ref=e239]: AUTONOMOUS INTELLIGENCE
+          - generic [ref=e242]: PROMPT GUARDRAILS
+          - generic [ref=e245]: VECTOR DATABASES
+          - generic [ref=e248]: FULL-STACK PRODUCTION
+          - generic [ref=e251]: LLM ORCHESTRATION
+          - generic [ref=e254]: DATA FORENSICS
+        - generic [aria-hidden] [ref=e257]:
+          - generic [ref=e258]: MULTI-AGENT SYSTEMS
+          - generic [ref=e261]: ZERO-TRUST RAG
+          - generic [ref=e264]: LANGGRAPH
+          - generic [ref=e267]: FORWARD DEPLOYED
+          - generic [ref=e270]: AUTONOMOUS INTELLIGENCE
+          - generic [ref=e273]: PROMPT GUARDRAILS
+          - generic [ref=e276]: VECTOR DATABASES
+          - generic [ref=e279]: FULL-STACK PRODUCTION
+          - generic [ref=e282]: LLM ORCHESTRATION
+          - generic [ref=e285]: DATA FORENSICS
+      - generic [ref=e290]:
+        - generic [ref=e291]: GITHUB UPLINK
+        - heading "Live from the forge" [level=2] [ref=e296]
+        - paragraph [ref=e298]: Real repositories and push activity streamed straight from github.com/Shreyas-Reddy707 — cached at the edge for freshness without the rate limits.
+      - generic [ref=e309]:
+        - paragraph [ref=e310]: NEXT TRANSMISSION
+        - heading "Walk the 3D Architecture Lab — every layer, every metric." [level=2] [ref=e311]
+        - paragraph [ref=e312]: Interactive dossiers for SecureRAG, DataMind, ConstructPulse and CrisisPulse — with live pipeline visualizers and full stack breakdowns.
+        - generic [ref=e313]:
+          - link "Open the Lab" [ref=e314] [cursor=pointer]:
+            - /url: /lab
+          - link "Grab the Resume" [ref=e317] [cursor=pointer]:
+            - /url: https://agentic-reddy--38jfex96.preview.emergentagent.com/api/resume
+    - contentinfo [ref=e321]:
+      - generic [ref=e322]:
+        - generic [ref=e323]:
+          - generic [ref=e324]: SHREYAS.AI
+          - paragraph [ref=e333]: ZERO-TRUST MULTI-AGENT ARCHITECTURESAUTONOMOUS DATA INTELLIGENCEPRODUCTION FULL-STACK SYSTEMS
+        - generic [ref=e334]:
+          - paragraph [ref=e335]: SECTORS
+          - generic [ref=e336]:
+            - link "Overview" [ref=e337] [cursor=pointer]:
+              - /url: /
+            - link "Experience" [ref=e338] [cursor=pointer]:
+              - /url: /experience
+            - link "Lab" [ref=e339] [cursor=pointer]:
+              - /url: /lab
+            - link "Arsenal" [ref=e340] [cursor=pointer]:
+              - /url: /arsenal
+            - link "Vault" [ref=e341] [cursor=pointer]:
+              - /url: /vault
+            - link "Contact" [ref=e342] [cursor=pointer]:
+              - /url: /contact
+        - generic [ref=e343]:
+          - paragraph [ref=e344]: UPLINK
+          - generic [ref=e345]:
+            - link "shreyas.chemakoora@gmail.com" [ref=e346] [cursor=pointer]:
+              - /url: mailto:shreyas.chemakoora@gmail.com
+            - paragraph [ref=e350]: Hyderabad, Telangana, India
+            - generic [ref=e354]:
+              - link "GitHub" [ref=e355] [cursor=pointer]:
+                - /url: https://github.com/Shreyas-Reddy707
+              - link "LinkedIn" [ref=e359] [cursor=pointer]:
+                - /url: https://www.linkedin.com/in/shreyas-reddy-8a7512285
+      - generic [ref=e364]:
+        - generic [ref=e365]: © 2026 CHEMAKOORA SHREYAS REDDY — ENGINEERED WITH REACT THREE FIBER + FASTAPI
+        - generic [ref=e366]: TELEMETRY ONLINE
+        - link "● STUDIO" [ref=e373] [cursor=pointer]:
+          - /url: /studio
+  - region "Notifications alt+T"

@@ -1,0 +1,32 @@
+meta {
+  name: 04 BOPLA Mass Assignment Block 422
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/agent/chat
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "query": "Tell me about SecureRAG",
+    "turnstile_token": "{{turnstileTestToken}}",
+    "is_admin": true,
+    "role": "superuser"
+  }
+}
+
+tests {
+  test("Mass assignment extra fields are rejected with 422", function() {
+    expect(res.getStatus()).to.equal(422);
+    expect(res.getBody().error_code).to.equal("VALIDATION_ERROR");
+  });
+}
+

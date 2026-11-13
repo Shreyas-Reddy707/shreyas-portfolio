@@ -1,0 +1,89 @@
+{
+  "source": "https://agentic-reddy--38jfex96.preview.emergentagent.com/",
+  "title": "Shreyas.AI — AI & GenAI Engineer | Multi-Agent Systems Architect",
+  "styles": {
+    "bodyBg": "rgb(5, 5, 8)",
+    "bodyColor": "rgb(241, 245, 249)",
+    "fontFamily": "Inter, system-ui, sans-serif",
+    "cardBg": "rgba(17, 24, 39, 0.8)",
+    "cardBorder": "rgb(27, 33, 45)",
+    "cardRadius": "12px",
+    "accentCyan": "#00F0FF",
+    "accentEmerald": "#10B981"
+  },
+  "routes": {
+    "/": {
+      "headings": [
+        { "tag": "H1", "text": "SHREYASREDDY." },
+        { "tag": "H2", "text": "System highlights" },
+        { "tag": "H3", "text": "SecureRAG" },
+        { "tag": "H3", "text": "DataMind" },
+        { "tag": "H3", "text": "ConstructPulse" },
+        { "tag": "H3", "text": "CrisisPulse" },
+        { "tag": "H3", "text": "Education" },
+        { "tag": "H3", "text": "Experience" },
+        { "tag": "H2", "text": "Live from the forge" },
+        { "tag": "H2", "text": "Walk the 3D Architecture Lab" }
+      ],
+      "hero": {
+        "badge": "AVAILABLE FOR ALL AI & TECH ROLES",
+        "headline": "AI & GENAI ENGINEER // MULTI-AGENT SYSTEMS ARCHITECT // FORWARD DEPLOYED ENGINEER",
+        "subheadline": "Engineering zero-trust multi-agent architectures, autonomous data intelligence platforms, and production full-stack systems."
+      }
+    },
+    "/experience": {
+      "headings": [
+        { "tag": "H1", "text": "Work experience" },
+        { "tag": "H2", "text": "Forward Deployed Engineer" },
+        { "tag": "H2", "text": "AI & Software Development Intern (Tech Lead)" }
+      ],
+      "roles": [
+        {
+          "title": "Forward Deployed Engineer",
+          "org": "Limelite Constructions · New Zealand (Remote)",
+          "period": "JUNE 2026 – PRESENT"
+        },
+        {
+          "title": "AI & Software Development Intern (Tech Lead)",
+          "org": "VISWAM.AI — Swecha & IIIT Hyderabad",
+          "period": "JUNE 2025 – AUGUST 2025"
+        }
+      ]
+    },
+    "/lab": {
+      "headings": [
+        { "tag": "H1", "text": "Systems, dissected" },
+        { "tag": "H3", "text": "SecureRAG" },
+        { "tag": "H3", "text": "DataMind" },
+        { "tag": "H3", "text": "ConstructPulse" },
+        { "tag": "H3", "text": "CrisisPulse" },
+        { "tag": "H3", "text": "Telugu Archive Portal" }
+      ]
+    },
+    "/arsenal": {
+      "headings": [
+        { "tag": "H2", "text": "The skill matrix" },
+        { "tag": "H3", "text": "AI, GenAI & Agentic Systems" },
+        { "tag": "H3", "text": "Data Science & Machine Learning" },
+        { "tag": "H3", "text": "Backend, Mobile & Databases" },
+        { "tag": "H3", "text": "Cloud, DevOps & Enterprise Automation" },
+        { "tag": "H3", "text": "Languages" }
+      ]
+    },
+    "/vault": {
+      "headings": [
+        { "tag": "H2", "text": "Certifications & hackathons" },
+        { "tag": "H3", "text": "Cloud & Core AI Certifications" },
+        { "tag": "H3", "text": "Industry Simulations & Data Science" },
+        { "tag": "H3", "text": "Hackathons & Open-Source Fellowships" }
+      ]
+    },
+    "/contact": {
+      "headings": [
+        { "tag": "H2", "text": "Open a channel" },
+        { "tag": "H3", "text": "Resume — 2026 Edition" }
+      ]
+    }
+  }
+}
+

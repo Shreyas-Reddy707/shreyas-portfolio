@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: shreyas-portfolio-backend
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PORT
+        value: 8000
+      - key: AI_PROVIDER
+        value: groq
+      - key: GROQ_MODEL
+        value: llama-3.3-70b-versatile
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: GITHUB_WEBHOOK_SECRET
+        sync: false
+      - key: GITHUB_PAT
+        sync: false
+      - key: GITHUB_USERNAME
+        value: Shreyas-Reddy707
+      - key: TURNSTILE_SECRET_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: CONTACT_NOTIFY_EMAIL
+        value: shreyas.chemakoora@gmail.com
+      - key: IP_HASH_PEPPER
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+
