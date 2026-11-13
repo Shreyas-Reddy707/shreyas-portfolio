@@ -1,7 +1,7 @@
 <!-- PORTFOLIO-SYNC:START -->
 ## Shreyas Reddy — AI/ML & GenAI Systems Engineer | Forward Deployed Engineer | Python • FastAPI • RAG • Multi-Agent Pipelines
 
-**Forward Deployed Engineer at Limelite Constructions (NZ)** | **Former Tech Lead at Viswam.ai** (AI/ML) | **B.Tech in Computer Science & Engineering (Artificial Intelligence)** @ ICFAI Tech University (2027)
+**Forward Deployed Engineer at Limelite Constructions · New Zealand (Remote)** | **Former AI & Software Development Intern (Tech Lead) at Viswam.ai · Swecha & IIIT Hyderabad** | **B.Tech in Computer Science & Engineering (Artificial Intelligence) at ICFAI Tech University · Hyderabad, India** | **B.Tech in Computer Science & Engineering (Artificial Intelligence)** @ ICFAI Tech University (2027)
 
 - **LinkedIn:** [https://www.linkedin.com/in/shreyas-reddy-8a7512285](https://www.linkedin.com/in/shreyas-reddy-8a7512285)
 - **GitHub:** [https://github.com/Shreyas-Reddy707](https://github.com/Shreyas-Reddy707)

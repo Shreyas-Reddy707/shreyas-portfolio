@@ -150,8 +150,6 @@ def _synthesize_deterministic_explainer(
 ) -> dict[str, Any]:
     headers = [h.strip(" *`#") for h in _MD_HEADER_RE.findall(readme_text or "")][:4]
     stack = [s for s in ([language] if language else []) + list(topics[:5]) if s]
-    if not stack:
-        stack = ["Python", "GitOps"]
 
     highlights = [
         f"Section coverage: {h}" for h in headers[:3]

@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Request, Response, status
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,6 +39,7 @@ router = APIRouter()
 @router.get("/health", response_model=HealthResponse)
 async def health_check(
     request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_db),
 ) -> HealthResponse:
     """Verify live connectivity to Postgres, pgvector, and Redis."""
@@ -65,8 +66,12 @@ async def health_check(
     except Exception:
         redis_ok = False
 
+    is_healthy = bool(pg_ok and redis_ok and pgvector_ok)
+    if not is_healthy:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+
     return HealthResponse(
-        status="ok" if (pg_ok and redis_ok and pgvector_ok) else "degraded",
+        status="ok" if is_healthy else "degraded",
         environment=settings.APP_ENV,
         postgres_connected=pg_ok,
         redis_connected=redis_ok,
@@ -209,12 +214,28 @@ async def get_github_profile_manifest(
             .order_by(Project.display_order.asc(), Project.last_pushed_at.desc())
         )
     ).scalars().all()
+    experiences = (
+        await db.execute(select(Experience).order_by(Experience.display_order.asc()))
+    ).scalars().all()
     hackathons = (
         await db.execute(select(Hackathon).order_by(Hackathon.display_order.asc()))
     ).scalars().all()
     certificates = (
         await db.execute(select(Certificate).order_by(Certificate.display_order.asc()))
     ).scalars().all()
+
+    exp_list = [
+        {
+            "slug": e.slug,
+            "role": e.role,
+            "organization": e.organization,
+            "location": e.location,
+            "is_current": e.is_current,
+            "start_date": str(e.start_date),
+            "end_date": str(e.end_date) if e.end_date else None,
+        }
+        for e in experiences
+    ]
 
     flagship_list = [
         {
@@ -258,6 +279,7 @@ async def get_github_profile_manifest(
         },
         flagship_projects=flagship_list,
         recent_auto_synced_repos=auto_list,
+        experiences=exp_list,
         hackathons=[
             {"event_name": h.event_name, "project_title": h.project_title, "role": h.role}
             for h in hackathons

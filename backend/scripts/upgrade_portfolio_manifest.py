@@ -503,6 +503,18 @@ def upgrade_manifest():
     with open(MANIFEST_PATH, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
+    frontend_manifest_path = BASE_DIR / "frontend" / "public" / "content" / "portfolio_data.json"
+    if frontend_manifest_path.parent.exists():
+        import copy
+
+        frontend_data = copy.deepcopy(data)
+        if "candidate_profile" in frontend_data:
+            frontend_data["candidate_profile"].pop("email_cleartext", None)
+            frontend_data["candidate_profile"].pop("phone_cleartext", None)
+        with open(frontend_manifest_path, "w", encoding="utf-8") as f:
+            json.dump(frontend_data, f, indent=2, ensure_ascii=False)
+        print("Synchronized sanitized manifest to frontend/public/content/portfolio_data.json.")
+
     print("Successfully upgraded content/portfolio_data.json with L1-L5 layers and recruiter-grade copy!")
 
 if __name__ == "__main__":

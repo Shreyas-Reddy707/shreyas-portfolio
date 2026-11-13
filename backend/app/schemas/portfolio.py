@@ -204,6 +204,7 @@ class GitHubProfileManifestResponse(BaseModel):
     candidate: dict[str, str]
     flagship_projects: list[dict[str, Any]]
     recent_auto_synced_repos: list[dict[str, Any]]
+    experiences: list[dict[str, Any]] = Field(default_factory=list)
     hackathons: list[dict[str, Any]]
     certificates: list[dict[str, Any]]
     markdown_block: str

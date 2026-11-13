@@ -24,12 +24,17 @@ def _slugify_repo(name: str) -> str:
     return _SLUG_CLEAN_RE.sub("-", name.lower()).strip("-")[:120] or "repo"
 
 
-def _parse_pushed_at(raw: str | None) -> datetime:
-    if not raw:
+def _parse_pushed_at(raw: int | str | None) -> datetime:
+    if raw is None:
         return datetime.now(UTC)
+    if isinstance(raw, int):
+        try:
+            return datetime.fromtimestamp(raw, tz=UTC)
+        except (ValueError, OSError):
+            return datetime.now(UTC)
     try:
-        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
-    except ValueError:
+        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except (ValueError, OSError):
         return datetime.now(UTC)
 
 

@@ -3,10 +3,11 @@ import logging
 import time
 import uuid
 
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.v1 import api_router
 from app.core.config import settings
@@ -18,7 +19,7 @@ MAX_GLOBAL_BODY_BYTES = 1_048_576  # 1 MB
 ROUTE_BODY_CAPS: dict[str, int] = {
     f"{settings.API_V1_PREFIX}/agent/chat": 4096,
     f"{settings.API_V1_PREFIX}/contact": 16384,
-    f"{settings.API_V1_PREFIX}/public/contact-reveal": 2048,
+    f"{settings.API_V1_PREFIX}/public/contact-reveal": 4096,
 }
 
 app = FastAPI(
@@ -121,8 +122,8 @@ async def security_perimeter_middleware(request: Request, call_next):
 
 
 # Layer 5: Unified Error Envelopes (Zero Stack Traces)
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
     request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
     detail = exc.detail
     if isinstance(detail, dict):

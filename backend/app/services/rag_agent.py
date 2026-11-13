@@ -3,7 +3,7 @@ import re
 from typing import Any
 
 import httpx
-from sqlalchemy import or_, select
+from sqlalchemy import case, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -17,7 +17,10 @@ from app.models.portfolio import (
     PortfolioEmbedding,
     Project,
 )
-from app.services.repo_explainer import build_nonce_guarded_prompt, compute_embedding_768
+from app.services.repo_explainer import (
+    build_nonce_guarded_prompt,
+    compute_embedding_768_with_model,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -225,12 +228,16 @@ async def build_full_portfolio_context(
             cert_lines.append(
                 f"- {c.title} | Issuer: {c.issuer} | Category: {c.category} | Skills: {skills_str}"
             )
+            cert_kws = [c.slug.lower(), c.title.lower()]
+            if c.credential_id:
+                cert_kws.append(c.credential_id.lower())
             catalog.append({
                 "source_type": "certificate",
                 "slug": c.slug,
                 "title": f"Certificate: {c.title}",
                 "raw_title": c.title,
-                "keywords": [c.slug.lower(), c.title.lower(), c.issuer.lower()],
+                "issuer": c.issuer.lower(),
+                "keywords": cert_kws,
                 "display_order": c.display_order,
             })
         sections.append("\n".join(cert_lines))
@@ -318,6 +325,18 @@ def resolve_accurate_citations(
     scored_matches.sort(key=lambda x: x[0])
     selected = [item for _, item in scored_matches if item["source_type"] in allowed_types]
 
+    # Separate resolution path for issuer-wide queries (e.g. "what IBM/Microsoft/Google certs does Shreyas have?")
+    if not selected and "certificate" in allowed_types:
+        for item in catalog:
+            if item["source_type"] == "certificate":
+                issuer = item.get("issuer", "")
+                if issuer and len(issuer) >= 3 and (issuer in query_lower or issuer in ans_lower):
+                    if item["slug"] not in seen_slugs:
+                        seen_slugs.add(item["slug"])
+                        selected.append(item)
+                        if len(selected) >= 4:
+                            break
+
     # If no matches were found through text scanning, use vector_rows filtered by allowed types
     if not selected:
         for r in vector_rows:
@@ -339,7 +358,9 @@ def resolve_accurate_citations(
     ]
 
 
-async def _call_groq_api(system_instruction: str, user_payload: str) -> str | None:
+async def _call_groq_api(
+    system_instruction: str, user_payload: str, max_timeout: float = 4.0
+) -> str | None:
     """Call Groq API using llama-3.3-70b-versatile with fallback to available models."""
     if not settings.GROQ_API_KEY:
         return None
@@ -358,9 +379,10 @@ async def _call_groq_api(system_instruction: str, user_payload: str) -> str | No
         "qwen/qwen3.8-27b",
     ]
 
+    per_attempt_timeout = max(1.5, min(max_timeout, 3.5))
     for model_name in models_to_try:
         try:
-            async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
+            async with httpx.AsyncClient(timeout=per_attempt_timeout, follow_redirects=False) as client:
                 resp = await client.post(
                     url,
                     headers=headers,
@@ -388,7 +410,9 @@ async def _call_groq_api(system_instruction: str, user_payload: str) -> str | No
     return None
 
 
-async def _call_gemini_api(system_instruction: str, user_payload: str) -> str | None:
+async def _call_gemini_api(
+    system_instruction: str, user_payload: str, max_timeout: float = 4.5
+) -> str | None:
     """Call Google Gemini 2.5 Flash API."""
     if not settings.GEMINI_API_KEY:
         return None
@@ -407,7 +431,7 @@ async def _call_gemini_api(system_instruction: str, user_payload: str) -> str | 
             "generationConfig": {"temperature": 0.2, "maxOutputTokens": 500},
         }
 
-        async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
+        async with httpx.AsyncClient(timeout=max_timeout, follow_redirects=False) as client:
             resp = await client.post(url, headers=headers, json=payload)
             if resp.status_code == 200:
                 data = resp.json()
@@ -452,9 +476,9 @@ async def _call_ollama_api(system_instruction: str, user_payload: str) -> str | 
 
 
 async def call_llm_with_failover(
-    system_instruction: str, user_payload: str
+    system_instruction: str, user_payload: str, remaining_budget: float = 7.0
 ) -> tuple[str | None, str]:
-    """Call Groq or Gemini with automatic instant failover.
+    """Call Groq or Gemini with automatic instant failover, bounded by remaining deadline.
 
     Returns (answer_text, provider_used).
     """
@@ -467,13 +491,14 @@ async def call_llm_with_failover(
     else:
         provider_sequence = ["groq", "gemini"]
 
+    per_provider_budget = max(2.0, remaining_budget / 2.0)
     for provider in provider_sequence:
         if provider == "groq" and settings.GROQ_API_KEY:
-            ans = await _call_groq_api(system_instruction, user_payload)
+            ans = await _call_groq_api(system_instruction, user_payload, max_timeout=per_provider_budget)
             if ans:
                 return ans, "groq"
         elif provider == "gemini" and settings.GEMINI_API_KEY:
-            ans = await _call_gemini_api(system_instruction, user_payload)
+            ans = await _call_gemini_api(system_instruction, user_payload, max_timeout=per_provider_budget)
             if ans:
                 return ans, "gemini"
         elif provider == "ollama":
@@ -527,30 +552,52 @@ async def answer_recruiter_query(
         async with asyncio.timeout(10.0):
             full_context, catalog = await build_full_portfolio_context(session)
 
+            STOP_WORDS = {
+                "a", "an", "the", "and", "or", "in", "on", "at", "to", "for", "of", "with",
+                "is", "are", "was", "were", "what", "how", "tell", "me", "about", "shreyas",
+                "his", "has", "does", "did", "from", "show", "give", "list", "which",
+            }
+
             has_embedding_budget = await consume_ai_tokens(50)
+            use_lexical = True
+
             if has_embedding_budget:
-                query_vec = await compute_embedding_768(query)
+                query_vec, query_model = await compute_embedding_768_with_model(query)
+                # Verify that stored vectors share the exact same model before computing distance
+                comp_stmt = select(PortfolioEmbedding.id).where(
+                    PortfolioEmbedding.metadata_json["embedding_model"].as_string() == query_model
+                ).limit(1)
+                has_comp = (await session.execute(comp_stmt)).first() is not None
+                if has_comp:
+                    use_lexical = False
+                    stmt = select(PortfolioEmbedding).where(
+                        PortfolioEmbedding.metadata_json["embedding_model"].as_string() == query_model
+                    )
+                    if category_filter:
+                        stmt = stmt.where(PortfolioEmbedding.source_type == category_filter)
+                    stmt = stmt.order_by(PortfolioEmbedding.embedding.cosine_distance(query_vec)).limit(4)
+                    rows = list((await session.execute(stmt)).scalars().all())
+
+            if use_lexical:
+                # Lexical fallback: remove stop words, apply detected scope, rank title matches before chunk text
+                target_scopes = detect_query_intent(query)
                 stmt = select(PortfolioEmbedding)
                 if category_filter:
                     stmt = stmt.where(PortfolioEmbedding.source_type == category_filter)
-                stmt = stmt.order_by(PortfolioEmbedding.embedding.cosine_distance(query_vec)).limit(4)
-                rows = list((await session.execute(stmt)).scalars().all())
-            else:
-                # Embedding budget exhausted: do NOT query offline pseudo-embedding against Gemini/Nomic dense vectors!
-                # Use lexical search (SQL ILIKE matching) on chunk_text & title
-                stmt = select(PortfolioEmbedding)
-                if category_filter:
-                    stmt = stmt.where(PortfolioEmbedding.source_type == category_filter)
-                keywords = [w for w in re.split(r"\W+", query.lower()) if len(w) >= 3]
+                elif target_scopes and len(target_scopes) < 4:
+                    stmt = stmt.where(PortfolioEmbedding.source_type.in_(target_scopes))
+
+                raw_words = [w for w in re.split(r"\W+", query.lower()) if len(w) >= 3]
+                keywords = [w for w in raw_words if w not in STOP_WORDS] or raw_words
                 if keywords:
-                    conditions = [
-                        or_(
-                            PortfolioEmbedding.chunk_text.ilike(f"%{kw}%"),
-                            PortfolioEmbedding.title.ilike(f"%{kw}%"),
-                        )
-                        for kw in keywords[:5]
-                    ]
-                    stmt = stmt.where(or_(*conditions)).limit(4)
+                    title_conds = [PortfolioEmbedding.title.ilike(f"%{kw}%") for kw in keywords[:3]]
+                    chunk_conds = [PortfolioEmbedding.chunk_text.ilike(f"%{kw}%") for kw in keywords[:5]]
+                    stmt = stmt.where(or_(*(title_conds + chunk_conds)))
+                    score = case(
+                        (or_(*title_conds), 2),
+                        else_=1,
+                    )
+                    stmt = stmt.order_by(score.desc()).limit(4)
                 else:
                     stmt = stmt.limit(4)
                 rows = list((await session.execute(stmt)).scalars().all())
@@ -561,10 +608,13 @@ async def answer_recruiter_query(
                 context_chunks.extend([f"TOP SIMILARITY MATCH ({r.title}):\n{r.chunk_text}" for r in rows])
 
             system_instruction, user_payload = build_nonce_guarded_prompt(query, context_chunks)
-            within_budget = await consume_ai_tokens(400)
+            estimated_tokens = max(150, (len(system_instruction) + len(user_payload)) // 4 + 450)
+            within_budget = await consume_ai_tokens(estimated_tokens)
 
             if within_budget:
-                answer_text, provider_used = await call_llm_with_failover(system_instruction, user_payload)
+                answer_text, provider_used = await call_llm_with_failover(
+                    system_instruction, user_payload, remaining_budget=7.0
+                )
                 if answer_text:
                     citations = resolve_accurate_citations(query, answer_text, catalog, rows)
                     return {

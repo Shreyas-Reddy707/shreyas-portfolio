@@ -1,6 +1,6 @@
 "use client";
 
-import { AdaptiveDpr, AdaptiveEvents } from "@react-three/drei";
+import { AdaptiveDpr, AdaptiveEvents, View } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -13,12 +13,17 @@ import { SceneErrorBoundary } from "./SceneErrorBoundary";
 import { TimelineAxisScene } from "./TimelineAxisScene";
 
 function ActiveRouteScene({ pathname }: { pathname: string }) {
-  if (pathname === "/") return <NeuralHubScene />;
-  if (pathname.startsWith("/projects")) return <ProjectBlueprintsScene />;
-  if (pathname.startsWith("/experience")) return <TimelineAxisScene />;
-  if (pathname.startsWith("/hackathons")) return <HackathonArenaScene />;
-  if (pathname.startsWith("/certificates")) return <CertVaultScene />;
-  return <NeuralHubScene />;
+  let scene = <NeuralHubScene />;
+  if (pathname.startsWith("/projects")) scene = <ProjectBlueprintsScene />;
+  else if (pathname.startsWith("/experience")) scene = <TimelineAxisScene />;
+  else if (pathname.startsWith("/hackathons")) scene = <HackathonArenaScene />;
+  else if (pathname.startsWith("/certificates")) scene = <CertVaultScene />;
+
+  return (
+    <View className="absolute inset-0 h-full w-full pointer-events-none">
+      {scene}
+    </View>
+  );
 }
 
 function CyberGridFloor() {
@@ -121,6 +126,7 @@ export function PersistentCanvas() {
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-0 opacity-80"
       >
+        <ActiveRouteScene pathname={pathname} />
         <Canvas
           dpr={[1, 1.5]}
           frameloop={isHidden ? "never" : "always"}
@@ -139,7 +145,7 @@ export function PersistentCanvas() {
           <CyberGridFloor />
           <ParticleField />
           <CameraRig />
-          <ActiveRouteScene pathname={pathname} />
+          <View.Port />
           <AdaptiveDpr pixelated />
           <AdaptiveEvents />
         </Canvas>

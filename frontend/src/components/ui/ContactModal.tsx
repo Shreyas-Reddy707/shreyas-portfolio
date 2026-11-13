@@ -24,6 +24,7 @@ export function ContactModal({ open, onClose, linkedinUrl, githubUrl }: ContactM
 
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
+  const activeSubmissionIdRef = useRef<number>(0);
 
   useEffect(() => {
     if (open) {
@@ -32,10 +33,19 @@ export function ContactModal({ open, onClose, linkedinUrl, githubUrl }: ContactM
       previousActiveElement.current = document.activeElement as HTMLElement | null;
       document.body.style.overflow = "hidden";
 
-      const timer = setTimeout(() => {
-        const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      const getFocusableControls = () => {
+        if (!dialogRef.current) return [];
+        return Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]):not([disabled])'
+          )
+        ).filter(
+          (el) => el.offsetParent !== null || el.getClientRects().length > 0
         );
+      };
+
+      const timer = setTimeout(() => {
+        const focusables = getFocusableControls();
         if (focusables && focusables.length > 0) {
           focusables[0].focus();
         }
@@ -45,10 +55,7 @@ export function ContactModal({ open, onClose, linkedinUrl, githubUrl }: ContactM
         if (e.key === "Escape") {
           onClose();
         } else if (e.key === "Tab") {
-          if (!dialogRef.current) return;
-          const focusables = dialogRef.current.querySelectorAll<HTMLElement>(
-            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-          );
+          const focusables = getFocusableControls();
           if (focusables.length === 0) return;
           const first = focusables[0];
           const last = focusables[focusables.length - 1];
@@ -64,6 +71,7 @@ export function ContactModal({ open, onClose, linkedinUrl, githubUrl }: ContactM
 
       window.addEventListener("keydown", handleKeyDown);
       return () => {
+        activeSubmissionIdRef.current += 1;
         clearTimeout(timer);
         document.body.style.overflow = "auto";
         window.removeEventListener("keydown", handleKeyDown);
@@ -71,6 +79,8 @@ export function ContactModal({ open, onClose, linkedinUrl, githubUrl }: ContactM
           previousActiveElement.current.focus();
         }
       };
+    } else {
+      activeSubmissionIdRef.current += 1;
     }
   }, [open, onClose]);
 
@@ -90,6 +100,7 @@ export function ContactModal({ open, onClose, linkedinUrl, githubUrl }: ContactM
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const currentSubmissionId = ++activeSubmissionIdRef.current;
     setSubmitting(true);
     setError(null);
     try {
@@ -100,6 +111,7 @@ export function ContactModal({ open, onClose, linkedinUrl, githubUrl }: ContactM
         role_opportunity: roleOpportunity || undefined,
         message,
       });
+      if (activeSubmissionIdRef.current !== currentSubmissionId) return;
       setSuccess({
         message: res.message,
         emailDispatched: Boolean(res.email_dispatched),
@@ -110,9 +122,12 @@ export function ContactModal({ open, onClose, linkedinUrl, githubUrl }: ContactM
       setRoleOpportunity("");
       setMessage("");
     } catch (err) {
+      if (activeSubmissionIdRef.current !== currentSubmissionId) return;
       setError(err instanceof Error ? err.message : "Failed to send inquiry.");
     } finally {
-      setSubmitting(false);
+      if (activeSubmissionIdRef.current === currentSubmissionId) {
+        setSubmitting(false);
+      }
     }
   }
 

@@ -65,9 +65,6 @@ export function InteractivePipelineCard({
 
   const selectLayer = (idx: number, isExplicit = false) => {
     setActiveLayerIndex(idx);
-    if (isExplicit) {
-      setIsFocused(true);
-    }
     if (typeof window !== "undefined") {
       window.dispatchEvent(
         new CustomEvent("portfolio:active-layer", {

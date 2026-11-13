@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     # Cryptographic Webhook & Next.js ISR Secrets (Min 32 chars / 128-bit entropy)
     GITHUB_WEBHOOK_SECRET: str = Field(..., min_length=32)
     GITHUB_PAT: str = Field(..., min_length=20)
-    GITHUB_USERNAME: str = Field(default="shreyas-reddy", min_length=2)
+    GITHUB_USERNAME: str = Field(default="Shreyas-Reddy707", min_length=2)
     NEXTJS_REVALIDATE_SECRET: str = Field(..., min_length=32)
     NEXTJS_REVALIDATE_URL: str = Field(default="http://localhost:3000/api/revalidate")
 
@@ -80,6 +80,7 @@ class Settings(BaseSettings):
             "00000000000000000000000000000000",
             "11111111111111111111111111111111",
             "abcdefghijklmnopqrstuvwxyz123456",
+            "replace_with_64_hex_char_secret_from_secrets_token_hex_32",
         }
         if trimmed.lower() in known_placeholders:
             raise ValueError(f"Secret value '{trimmed}' is a known placeholder and cannot be used.")

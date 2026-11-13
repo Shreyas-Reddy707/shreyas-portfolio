@@ -29,15 +29,38 @@ def render_markdown_block(data: dict[str, Any]) -> str:
     hackathons = data["hackathons"]
     certificates = data["certificates"]
 
+    experiences = data.get("experiences") or []
+    role_parts: list[str] = []
+    if experiences:
+        for exp in experiences:
+            org = exp.get("organization") or exp.get("company") or ""
+            if "VISWAM.AI" in org:
+                org = org.replace("VISWAM.AI", "Viswam.ai")
+            role = exp.get("role") or ""
+            if exp.get("is_current"):
+                role_parts.append(f"**{role} at {org}**")
+            else:
+                role_parts.append(f"**Former {role} at {org}**")
+    else:
+        role_parts = [
+            "**Forward Deployed Engineer at Limelite Constructions (NZ)**",
+            "**Former Tech Lead at Viswam.ai** (AI/ML)",
+        ]
+
+    edu_part = (
+        f"**{profile['education_degree']}** @ {profile['education_institution']} ({profile['graduation_year']})"
+        if profile.get("education_degree")
+        else ""
+    )
+    if edu_part:
+        role_parts.append(edu_part)
+    summary_line = " | ".join(role_parts)
+
     lines: list[str] = [
         START_MARKER,
         f"## {profile['full_name']} — {profile['headline']}",
         "",
-        (
-            f"**Forward Deployed Engineer at Limelite Constructions (NZ)** | "
-            f"**Former Tech Lead at Viswam.ai** (AI/ML) | "
-            f"**{profile['education_degree']}** @ {profile['education_institution']} ({profile['graduation_year']})"
-        ),
+        summary_line,
         "",
         (
             f"- **LinkedIn:** [{profile['linkedin_url']}]({profile['linkedin_url']})\n"
@@ -89,7 +112,7 @@ def render_markdown_block(data: dict[str, Any]) -> str:
 def update_readme_content(existing_text: str, rendered_block: str) -> str:
     """Replace the PORTFOLIO-SYNC block in text or append if missing."""
     if _BLOCK_RE.search(existing_text):
-        return _BLOCK_RE.sub(rendered_block.rstrip("\n"), existing_text)
+        return _BLOCK_RE.sub(lambda _: rendered_block.rstrip("\n"), existing_text)
     separator = "\n\n" if existing_text and not existing_text.endswith("\n\n") else ""
     return existing_text + separator + rendered_block
 

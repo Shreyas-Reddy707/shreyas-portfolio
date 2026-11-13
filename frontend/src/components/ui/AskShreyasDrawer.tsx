@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, Bot, Send, Sparkles, X } from "lucide-react";
 import Link from "next/link";
-import React, { useState, type FormEvent } from "react";
+import React, { useEffect, useRef, useState, type FormEvent } from "react";
 import { askShreyasAgent } from "@/lib/api";
 import type { AgentCitation } from "@/lib/types";
 
@@ -159,6 +159,39 @@ export function AskShreyasDrawer() {
     },
   ]);
 
+  const launcherRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      inputRef.current?.focus();
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          setOpen(false);
+        }
+      };
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        launcherRef.current?.focus();
+      };
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      const isNearBottom =
+        container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+      if (isNearBottom) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  }, [messages, open]);
+
   async function runQuery(text: string) {
     const trimmed = text.trim();
     if (trimmed.length < 3 || loading) return;
@@ -222,6 +255,7 @@ export function AskShreyasDrawer() {
   return (
     <>
       <button
+        ref={launcherRef}
         type="button"
         onClick={() => setOpen(true)}
         className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full border border-cyanPulse/40 bg-surface/95 px-4 py-2.5 text-sm font-medium text-[#FAFAFA] shadow-lg backdrop-blur transition hover:border-cyanPulse hover:bg-slate-800"
@@ -231,13 +265,19 @@ export function AskShreyasDrawer() {
       </button>
 
       {open && (
-        <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-hairline bg-obsidian/95 shadow-2xl backdrop-blur-md">
+        <div
+          ref={drawerRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="shreyas-ai-title"
+          className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-hairline bg-obsidian/95 shadow-2xl backdrop-blur-md"
+        >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-hairline px-5 py-4">
             <div className="flex items-center gap-2.5">
               <Bot className="h-5 w-5 text-cyanPulse" />
               <div>
-                <h2 className="text-sm font-semibold text-[#FAFAFA]">
+                <h2 id="shreyas-ai-title" className="text-sm font-semibold text-[#FAFAFA]">
                   Shreyas AI
                 </h2>
                 <div className="flex items-center gap-1.5">
@@ -259,7 +299,7 @@ export function AskShreyasDrawer() {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 space-y-4 overflow-y-auto p-5">
+          <div ref={messagesContainerRef} className="flex-1 space-y-4 overflow-y-auto p-5">
             {messages.map((m, idx) => (
               <div
                 key={idx}
@@ -301,12 +341,14 @@ export function AskShreyasDrawer() {
                 <span>Synthesizing answer...</span>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input Bar (Clean without chips) */}
           <div className="border-t border-hairline bg-surface/80 p-4">
             <form onSubmit={handleSubmit} className="flex gap-2">
               <input
+                ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 maxLength={500}
