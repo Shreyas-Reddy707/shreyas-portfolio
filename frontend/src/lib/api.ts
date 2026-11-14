@@ -2,7 +2,7 @@ import type { AgentChatResponse, ContactRevealResponse } from "./types";
 import { DEV_TURNSTILE_TOKEN, getTurnstileToken } from "./turnstile";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
 export { DEV_TURNSTILE_TOKEN };
 
@@ -10,7 +10,10 @@ export async function revealContactDetails(
   turnstileToken?: string
 ): Promise<ContactRevealResponse> {
   const token = turnstileToken || (await getTurnstileToken("contact-reveal"));
-  const res = await fetch(`${API_BASE}/public/contact-reveal`, {
+  const endpoint = API_BASE.startsWith("/")
+    ? `${API_BASE}/contact-reveal`
+    : `${API_BASE}/public/contact-reveal`;
+  const res = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ turnstile_token: token }),
