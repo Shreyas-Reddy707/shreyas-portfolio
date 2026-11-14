@@ -6,8 +6,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import httpx
-
 START_MARKER = "<!-- PORTFOLIO-SYNC:START -->"
 END_MARKER = "<!-- PORTFOLIO-SYNC:END -->"
 _BLOCK_RE = re.compile(
@@ -107,6 +105,12 @@ def update_readme_file(target_path: Path, rendered_block: str) -> None:
 
 def push_to_github_profile(rendered_block: str, username: str, pat: str) -> bool:
     """Push the rendered block to https://github.com/{username}/{username}/README.md via GitHub Contents API."""
+    try:
+        import httpx
+    except ImportError:
+        print("ERROR: httpx is required for --push-github mode.")
+        return False
+
     url = f"https://api.github.com/repos/{username}/{username}/contents/README.md"
     headers = {
         "Authorization": f"Bearer {pat}",
