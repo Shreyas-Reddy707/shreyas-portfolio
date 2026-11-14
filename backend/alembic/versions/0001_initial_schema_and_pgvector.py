@@ -322,7 +322,7 @@ def upgrade() -> None:
         ),
         sa.CheckConstraint(
             "employment_type IN ('Leadership Internship', 'Technical Team Lead', "
-            "'Education', 'Full-Time', 'Open Source')",
+            "'Education', 'Full-Time', 'Part-Time', 'Contract', 'Freelance', 'Internship', 'Open Source')",
             name="ck_experiences_employment_type",
         ),
         sa.PrimaryKeyConstraint("id"),

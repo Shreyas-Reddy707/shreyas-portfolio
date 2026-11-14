@@ -199,7 +199,7 @@ class Experience(Base):
     __table_args__ = (
         CheckConstraint(
             "employment_type IN ('Leadership Internship', 'Technical Team Lead', "
-            "'Education', 'Full-Time', 'Open Source')",
+            "'Education', 'Full-Time', 'Part-Time', 'Contract', 'Freelance', 'Internship', 'Open Source')",
             name="ck_experiences_employment_type",
         ),
         Index("ix_experiences_timeline", text("display_order ASC"), text("start_date DESC")),

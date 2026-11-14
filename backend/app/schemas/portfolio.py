@@ -143,7 +143,17 @@ class ExperiencePublic(BaseModel):
     organization: str
     organization_url: str | None = None
     location: str
-    employment_type: str
+    employment_type: Literal[
+        "Full-Time",
+        "Part-Time",
+        "Contract",
+        "Freelance",
+        "Internship",
+        "Leadership Internship",
+        "Technical Team Lead",
+        "Education",
+        "Open Source",
+    ]
     start_date: date
     end_date: date | None = None
     is_current: bool
