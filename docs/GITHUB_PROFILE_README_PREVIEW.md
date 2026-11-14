@@ -1,9 +1,9 @@
 <!-- PORTFOLIO-SYNC:START -->
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,50:1e293b,100:0891b2&height=210&section=header&text=Shreyas%20Reddy&fontSize=54&fontColor=f8fafc&animation=fadeIn&fontAlignY=35&desc=Forward%20Deployed%20Engineer%20%7C%20GenAI%20%26%20Full-Stack%20Systems&descAlignY=58&descSize=18" width="100%" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f172a,50:1e293b,100:0891b2&height=210&section=header&text=Shreyas%20Reddy&fontSize=54&fontColor=f8fafc&animation=fadeIn&fontAlignY=35&desc=Forward%20Deployed%20Engineer%20%7C%20GenAI%20%E2%80%A2%20Full-Stack%20Systems&descAlignY=58&descSize=18" width="100%" />
 
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=18&duration=3200&pause=1000&color=22D3EE&center=true&vCenter=true&width=760&lines=Forward+Deployed+Engineer+(Contract)+%40+Limelite+Constructions+(NZ);Zero-Trust+Multi-Agent+RAG+%26+LangGraph+Architectures;Full-Stack+AI+Systems%3A+Next.js+15+%E2%80%A2+FastAPI+%E2%80%A2+pgvector+%E2%80%A2+Flutter;1+of+10+Tech+Leads+(from+200+Interns)+%40+VISWAM.AI+(IIIT-H+%26+Swecha))](https://shreyas-portfolio-sandy.vercel.app)
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=18&duration=3200&pause=1000&color=22D3EE&center=true&vCenter=true&width=760&lines=Forward+Deployed+Engineer+(Contract)+%40+Limelite+Constructions+(NZ);Zero-Trust+Multi-Agent+RAG+%E2%80%A2+LangGraph+Architectures;Full-Stack+AI+Systems%3A+Next.js+15+%E2%80%A2+FastAPI+%E2%80%A2+pgvector+%E2%80%A2+Flutter;1+of+10+Tech+Leads+(from+200+Interns)+%40+VISWAM.AI+(IIIT-H+%E2%80%A2+Swecha))](https://shreyas-portfolio-sandy.vercel.app)
 
 <br/>
 
