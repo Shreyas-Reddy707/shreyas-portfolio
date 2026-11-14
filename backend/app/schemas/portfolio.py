@@ -6,7 +6,24 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 _CONTROL_CHARS_RE = re.compile(r"[\x00-\x1f\x7f]")
-_HTML_TAGS_RE = re.compile(r"<[^>]+>")
+_HTML_TAGS_RE = re.compile(r"<[^>]*>")
+_LINGERING_BRACKETS_RE = re.compile(r"[<>]")
+
+
+def _sanitize_text(v: Any) -> Any:
+    """Multi-pass sanitization neutralizing nested multi-char tags (<scr<script>ipt>) and controls."""
+    if v is None:
+        return None
+    if not isinstance(v, str):
+        return v
+    cleaned = v
+    previous = ""
+    while cleaned != previous:
+        previous = cleaned
+        cleaned = _HTML_TAGS_RE.sub("", cleaned)
+    cleaned = _LINGERING_BRACKETS_RE.sub("", cleaned)
+    cleaned = _CONTROL_CHARS_RE.sub(" ", cleaned).strip()
+    return cleaned
 
 
 # ---------------------------------------------------------------------------
@@ -30,7 +47,7 @@ class AgentChatRequest(BaseModel):
     @field_validator("query")
     @classmethod
     def sanitize_query(cls, v: str) -> str:
-        cleaned = _CONTROL_CHARS_RE.sub("", v).strip()
+        cleaned = _sanitize_text(v)
         if len(cleaned) < 3:
             raise ValueError("Query must contain at least 3 printable characters.")
         return cleaned
@@ -49,13 +66,7 @@ class ContactSubmissionRequest(BaseModel):
     @field_validator("sender_name", "sender_company", "role_opportunity", "message", mode="before")
     @classmethod
     def strip_html_and_controls(cls, v: Any) -> Any:
-        if v is None:
-            return None
-        if not isinstance(v, str):
-            return v
-        cleaned = _HTML_TAGS_RE.sub("", v)
-        cleaned = _CONTROL_CHARS_RE.sub(" ", cleaned).strip()
-        return cleaned
+        return _sanitize_text(v)
 
 
 # ---------------------------------------------------------------------------

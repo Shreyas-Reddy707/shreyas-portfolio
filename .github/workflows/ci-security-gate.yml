@@ -17,6 +17,8 @@ jobs:
   backend-security-and-tests:
     name: Backend Security, Type & Test Gate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     services:
       postgres:
@@ -106,6 +108,8 @@ jobs:
   frontend-build:
     name: Frontend Typecheck & Build Gate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     defaults:
       run:

@@ -8,8 +8,16 @@ import {
 
 function sanitizeString(input?: string | null): string {
   if (!input || typeof input !== "string") return "";
-  return input
-    .replace(/<[^>]+>/g, "")
+  let cleaned = input;
+  let previous = "";
+  // Loop until stable to neutralize nested multi-character bypasses like <scr<script>ipt>
+  do {
+    previous = cleaned;
+    cleaned = cleaned.replace(/<[^>]*>/g, "");
+  } while (cleaned !== previous);
+
+  return cleaned
+    .replace(/[<>]/g, "")
     .replace(/[\x00-\x1f\x7f]/g, " ")
     .trim();
 }

@@ -12,9 +12,14 @@ on:
   schedule:
     - cron: "0 0 * * *"
 
+permissions:
+  contents: read
+
 jobs:
   sync-profile-readme:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       PROFILE_README_PAT: ${{ secrets.PROFILE_README_PAT }}
       GITHUB_USERNAME: ${{ vars.GITHUB_USERNAME || 'Shreyas-Reddy707' }}

@@ -15,7 +15,47 @@ from app.core.security import validate_outbound_url
 logger = logging.getLogger(__name__)
 
 _TOKEN_RE = re.compile(r"[a-z0-9_+-]{2,}")
-_MD_HEADER_RE = re.compile(r"^#{1,3}\s+(.+)$", re.MULTILINE)
+
+
+def _extract_markdown_headers(text: str, limit: int = 4) -> list[str]:
+    """Deterministically extract up to `limit` markdown headers in linear time without regex."""
+    if not text:
+        return []
+    headers: list[str] = []
+    for line in text.splitlines():
+        trimmed = line.strip()
+        if trimmed.startswith("#"):
+            count = 0
+            while count < len(trimmed) and trimmed[count] == "#":
+                count += 1
+            if 1 <= count <= 3 and count < len(trimmed) and trimmed[count].isspace():
+                header = trimmed[count:].strip(" *`#")
+                if header:
+                    headers.append(header)
+                    if len(headers) >= limit:
+                        break
+    return headers
+
+
+def _parse_json_dict(raw: str) -> dict[str, Any] | None:
+    """Safely extract a JSON dict from raw LLM output with deterministic linear boundary search."""
+    if not raw or not isinstance(raw, str):
+        return None
+    start = raw.find("{")
+    end = raw.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        try:
+            val = json.loads(raw[start : end + 1])
+            if isinstance(val, dict):
+                return val
+        except json.JSONDecodeError as exc:
+            logger.debug("Candidate JSON slice parse fallback: %s", exc)
+    try:
+        val = json.loads(raw)
+        return val if isinstance(val, dict) else None
+    except json.JSONDecodeError as exc:
+        logger.debug("Raw JSON parse fallback: %s", exc)
+        return None
 
 
 def build_nonce_guarded_prompt(
@@ -148,7 +188,7 @@ def _synthesize_deterministic_explainer(
     topics: list[str],
     readme_sha: str | None,
 ) -> dict[str, Any]:
-    headers = [h.strip(" *`#") for h in _MD_HEADER_RE.findall(readme_text or "")][:4]
+    headers = _extract_markdown_headers(readme_text or "", limit=4)
     stack = [s for s in ([language] if language else []) + list(topics[:5]) if s]
     if not stack:
         stack = ["Python", "GitOps"]
@@ -216,7 +256,7 @@ async def generate_repo_explainer(
                 )
                 resp.raise_for_status()
                 raw_text = resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-                validated = _validate_explainer_payload(json.loads(raw_text), description)
+                validated = _validate_explainer_payload(_parse_json_dict(raw_text), description)
                 if validated:
                     validated["generated_by"] = "gemini-2.5-flash"
                     validated["readme_sha_synced"] = readme_sha or "none"
@@ -246,7 +286,7 @@ async def generate_repo_explainer(
                 )
                 resp.raise_for_status()
                 raw_text = resp.json()["choices"][0]["message"]["content"]
-                validated = _validate_explainer_payload(json.loads(raw_text), description)
+                validated = _validate_explainer_payload(_parse_json_dict(raw_text), description)
                 if validated:
                     validated["generated_by"] = "groq-llama-3.3-70b"
                     validated["readme_sha_synced"] = readme_sha or "none"
@@ -275,7 +315,7 @@ async def generate_repo_explainer(
                 )
                 if resp.status_code == 200:
                     raw_text = resp.json().get("response", "{}")
-                    validated = _validate_explainer_payload(json.loads(raw_text), description)
+                    validated = _validate_explainer_payload(_parse_json_dict(raw_text), description)
                     if validated:
                         validated["generated_by"] = "ollama-llama3.2"
                         validated["readme_sha_synced"] = readme_sha or "none"
