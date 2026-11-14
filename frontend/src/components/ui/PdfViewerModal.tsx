@@ -1,8 +1,7 @@
 "use client";
 
 import { Download, ExternalLink, FileText, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef } from "react";
 
 interface PdfViewerModalProps {
   isOpen: boolean;
@@ -19,31 +18,24 @@ export function PdfViewerModal({
   title,
   subtitle,
 }: PdfViewerModalProps) {
-  const [mounted, setMounted] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const isVisible = isOpen && Boolean(pdfUrl) && mounted;
+    const isVisible = isOpen && Boolean(pdfUrl);
     if (!isVisible) return;
 
     previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
 
     const mainElement = document.querySelector("main");
-    const canHideMain = Boolean(mainElement && !mainElement.contains(dialogRef.current));
-    if (canHideMain && mainElement) {
+    if (mainElement) {
       mainElement.setAttribute("aria-hidden", "true");
     }
 
-    const focusableSelector =
-      'button, [href], input, select, textarea, iframe, [tabindex]:not([tabindex="-1"])';
-
-    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(focusableSelector);
+    const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
     if (focusable && focusable.length > 0) {
       focusable[0].focus();
     } else {
@@ -58,7 +50,9 @@ export function PdfViewerModal({
       }
       if (e.key === "Tab" && dialogRef.current) {
         const focusableNodes = Array.from(
-          dialogRef.current.querySelectorAll<HTMLElement>(focusableSelector)
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          )
         ).filter((el) => !el.hasAttribute("disabled"));
 
         if (focusableNodes.length === 0) return;
@@ -81,16 +75,16 @@ export function PdfViewerModal({
     return () => {
       document.body.style.overflow = "auto";
       window.removeEventListener("keydown", handleKeyDown);
-      if (canHideMain && mainElement) {
+      if (mainElement) {
         mainElement.removeAttribute("aria-hidden");
       }
       previouslyFocusedElementRef.current?.focus();
     };
-  }, [isOpen, pdfUrl, mounted, onClose]);
+  }, [isOpen, pdfUrl, onClose]);
 
-  if (!isOpen || !pdfUrl || !mounted) return null;
+  if (!isOpen || !pdfUrl) return null;
 
-  const modalContent = (
+  return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md transition-opacity duration-200"
       onClick={onClose}
@@ -160,9 +154,8 @@ export function PdfViewerModal({
         <div className="relative flex-1 bg-obsidian/90 overflow-hidden">
           <iframe
             src={`${pdfUrl}#toolbar=0&navpanes=0`}
-            className="w-full h-full border-0 focus:outline-none focus:ring-1 focus:ring-cyanPulse/50"
+            className="w-full h-full border-0"
             title={title}
-            tabIndex={0}
           />
         </div>
 
@@ -174,6 +167,4 @@ export function PdfViewerModal({
       </div>
     </div>
   );
-
-  return typeof document !== "undefined" ? createPortal(modalContent, document.body) : null;
 }

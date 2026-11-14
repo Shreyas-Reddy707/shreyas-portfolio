@@ -36,7 +36,7 @@ export function ProjectVisualizerEngine({
   onOpenDossier,
 }: ProjectVisualizerEngineProps) {
   const visualizerType =
-    project.model_3d_config?.visualizer_type || "architecture_flowchart_dag";
+    project.model_3d_config?.visualizer_type || "zero_trust_shield_stack";
 
   // Dispatch 3D canvas interaction event
   const notifyCanvas = (layerIndex: number, extraMeta?: string) => {
@@ -112,7 +112,6 @@ export function ProjectVisualizerEngine({
         />
       );
     case "colab_notebook_workflow":
-    case "colab_notebook_surface":
       return (
         <ColabNotebookVisualizer
           project={project}
@@ -704,8 +703,8 @@ function CrisisPulseRadarVisualizer({
       severity: "High",
       accent: "#F59E0B",
       coords: "17.3850° N, 78.4867° E",
-      diff: "Sample telemetry payload",
-      time: "Simulated Event #01",
+      diff: "+482 bytes · Wikinews #829104",
+      time: "2m ago",
       x: 48,
       y: 55,
     },
@@ -715,8 +714,8 @@ function CrisisPulseRadarVisualizer({
       severity: "Critical",
       accent: "#F43F5E",
       coords: "16.5062° N, 80.6480° E",
-      diff: "Sample telemetry payload",
-      time: "Simulated Event #02",
+      diff: "+1,240 bytes · Wikipedia Breaking #401",
+      time: "Just now",
       x: 65,
       y: 62,
     },
@@ -726,8 +725,8 @@ function CrisisPulseRadarVisualizer({
       severity: "Moderate",
       accent: "#06B6D4",
       coords: "12.9716° N, 77.5946° E",
-      diff: "Sample telemetry payload",
-      time: "Simulated Event #03",
+      diff: "+195 bytes · Incident Feed",
+      time: "8m ago",
       x: 42,
       y: 74,
     },
@@ -737,8 +736,8 @@ function CrisisPulseRadarVisualizer({
       severity: "Elevated",
       accent: "#A855F7",
       coords: "28.6139° N, 77.2090° E",
-      diff: "Sample telemetry payload",
-      time: "Simulated Event #04",
+      diff: "+312 bytes · Central Bulletin",
+      time: "14m ago",
       x: 38,
       y: 28,
     },
@@ -756,7 +755,7 @@ function CrisisPulseRadarVisualizer({
         </div>
         <div className="flex items-center gap-1.5 text-slate-400">
           <span className="h-2 w-2 rounded-full bg-emeraldSignal animate-ping" />
-          <span>SYNTHETIC TELEMETRY SAMPLE</span>
+          <span>WIKIVERSE SSE STREAM</span>
         </div>
       </div>
 

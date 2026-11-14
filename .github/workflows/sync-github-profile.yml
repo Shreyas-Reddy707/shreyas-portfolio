@@ -27,21 +27,10 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Resolve active portfolio manifest
-        run: |
-          MANIFEST_ENDPOINT="${{ vars.PORTFOLIO_MANIFEST_URL || 'https://shreyas-portfolio.vercel.app/api/v1/public/manifest' }}"
-          echo "Attempting to fetch live manifest from ${MANIFEST_ENDPOINT}..."
-          if curl -sSf --max-time 10 "${MANIFEST_ENDPOINT}" -o /tmp/active_manifest.json && [ -s /tmp/active_manifest.json ]; then
-            echo "Successfully retrieved live database manifest from endpoint."
-          else
-            echo "Endpoint unavailable or timed out; falling back to checked-in manifest."
-            cp content/portfolio_data.json /tmp/active_manifest.json
-          fi
-
       - name: Render PORTFOLIO-SYNC Markdown block
         run: |
           python backend/scripts/render_profile_readme.py \
-            --manifest /tmp/active_manifest.json \
+            --manifest content/portfolio_data.json \
             --output /tmp/profile_sync_block.md
 
       - name: Update Profile README if PAT is configured
@@ -49,7 +38,7 @@ jobs:
         run: |
           git clone "https://x-access-token:${PROFILE_README_PAT}@github.com/${GITHUB_USERNAME}/${GITHUB_USERNAME}.git" /tmp/profile-repo
           python backend/scripts/render_profile_readme.py \
-            --manifest /tmp/active_manifest.json \
+            --manifest content/portfolio_data.json \
             --target-readme /tmp/profile-repo/README.md
           cd /tmp/profile-repo
           if ! git diff --quiet README.md; then

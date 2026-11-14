@@ -37,7 +37,7 @@ function loadTurnstileScript(): Promise<void> {
     return scriptLoadPromise;
   }
 
-  scriptLoadPromise = new Promise<void>((resolve, reject) => {
+  scriptLoadPromise = new Promise((resolve) => {
     const existing = document.querySelector(`script[src*="turnstile/v0/api.js"]`);
     if (existing) {
       const checkInterval = setInterval(() => {
@@ -60,11 +60,7 @@ function loadTurnstileScript(): Promise<void> {
     script.onload = () => resolve();
     script.onerror = () => {
       console.warn("Turnstile script unavailable.");
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-      scriptLoadPromise = null;
-      reject(new Error("Failed to load Turnstile script."));
+      resolve();
     };
     document.head.appendChild(script);
 
@@ -91,16 +87,10 @@ export async function getTurnstileToken(action = "general"): Promise<string> {
 
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const isDev = process.env.NODE_ENV !== "production";
-  const isConfiguredKey = Boolean(
-    siteKey &&
-      (siteKey.startsWith("0x4") ||
-        siteKey.startsWith("1x") ||
-        siteKey.startsWith("2x") ||
-        siteKey.startsWith("3x"))
-  );
+  const isRealKey = Boolean(siteKey && siteKey.startsWith("0x4"));
 
-  // Return test token only in development when no valid Cloudflare site key is configured
-  if (isDev && !isConfiguredKey) {
+  // Development / dummy key fast-path: allow test-token only under explicit dev or non-production key
+  if (!isRealKey || (isDev && !siteKey)) {
     return DEV_TURNSTILE_TOKEN;
   }
 

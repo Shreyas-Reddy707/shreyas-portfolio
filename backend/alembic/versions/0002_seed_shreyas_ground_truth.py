@@ -28,11 +28,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def _load_manifest() -> dict:
-    migration_dir = Path(__file__).resolve().parent
-    seed_path = migration_dir / "0002_seed_data.json"
-    if seed_path.exists():
-        return json.loads(seed_path.read_text(encoding="utf-8"))
-    manifest_path = migration_dir.parents[2] / "content" / "portfolio_data.json"
+    manifest_path = Path(__file__).resolve().parents[3] / "content" / "portfolio_data.json"
     return json.loads(manifest_path.read_text(encoding="utf-8"))
 
 

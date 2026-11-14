@@ -35,10 +35,7 @@ def extract_client_ip(request: Request) -> str:
         candidate = cf_ip.strip()
         try:
             ipaddress.ip_address(candidate)
-            # Only trust CF-Connecting-IP if incoming direct connection is from a trusted proxy (loopback or private CIDR)
-            peer_ip = ipaddress.ip_address(client_host)
-            if peer_ip.is_loopback or peer_ip.is_private:
-                return candidate
+            return candidate
         except ValueError:
             pass
     return client_host

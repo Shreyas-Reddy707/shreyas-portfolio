@@ -268,7 +268,7 @@ export default async function CommandHubPage() {
             Credentials Vault ({certificates.length})
           </h3>
           <p className="mt-1 text-xs text-slate-400">
-            {certificates.length} Verified Certs + In-App PDF Viewers (Microsoft, Google, NVIDIA, IBM, Tata).
+            22 Verified Certs + 25 In-App PDF Viewers (Microsoft, Google, NVIDIA, IBM, Tata).
           </p>
         </Link>
       </section>

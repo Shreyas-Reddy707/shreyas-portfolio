@@ -24,17 +24,12 @@ def _slugify_repo(name: str) -> str:
     return _SLUG_CLEAN_RE.sub("-", name.lower()).strip("-")[:120] or "repo"
 
 
-def _parse_pushed_at(raw: int | str | None) -> datetime:
-    if raw is None:
+def _parse_pushed_at(raw: str | None) -> datetime:
+    if not raw:
         return datetime.now(UTC)
-    if isinstance(raw, int):
-        try:
-            return datetime.fromtimestamp(raw, tz=UTC)
-        except (ValueError, OSError):
-            return datetime.now(UTC)
     try:
-        return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-    except (ValueError, OSError):
+        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except ValueError:
         return datetime.now(UTC)
 
 
@@ -170,28 +165,18 @@ async def sync_github_repositories(
             except Exception as exc:
                 logger.debug("Failed to fetch README dynamically for %s: %s", repo_name, exc)
 
-        # For mapped repositories, resolve the curated canonical project first by target_slug
+        # Lookup by stable Project.github_repo_id first before slug
         existing = None
-        is_mapped_repo = bool(
-            slug in FLAGSHIP_REPO_NAME_MAP
-            or target_slug in FLAGSHIP_REPO_NAME_MAP.values()
-        )
-        if is_mapped_repo:
-            existing = (
-                await session.execute(select(Project).where(Project.slug == target_slug))
-            ).scalar_one_or_none()
-
-        if existing is None and github_repo_id is not None:
+        if github_repo_id is not None:
             existing = (
                 await session.execute(select(Project).where(Project.github_repo_id == int(github_repo_id)))
             ).scalar_one_or_none()
-
         if existing is None:
             existing = (
                 await session.execute(select(Project).where(Project.slug == target_slug))
             ).scalar_one_or_none()
 
-        if existing is not None and (is_mapped_repo or existing.is_flagship or not existing.is_auto_synced):
+        if existing is not None and (target_slug in FLAGSHIP_REPO_NAME_MAP.values() or existing.is_flagship or not existing.is_auto_synced):
             # Clean up any stale auto-synced duplicate row with this github_repo_id or slug first
             if github_repo_id is not None or slug != target_slug:
                 conditions = [Project.id != existing.id]
@@ -207,12 +192,6 @@ async def sync_github_repositories(
                         await session.execute(select(Project).where(*conditions))
                     ).scalars().all()
                     for d in stale_dups:
-                        await session.execute(
-                            delete(PortfolioEmbedding).where(
-                                PortfolioEmbedding.source_type == "project",
-                                PortfolioEmbedding.source_id == d.id,
-                            )
-                        )
                         await session.delete(d)
                     await session.flush()
 
@@ -432,12 +411,7 @@ async def sync_github_repositories(
         )
         auto_synced += 1
 
-    try:
-        await session.commit()
-    except Exception as exc:
-        await session.rollback()
-        raise exc
-
+    await session.commit()
     await invalidate_portfolio_cache()
     return {"flagship_updated": flagship_updated, "auto_synced": auto_synced}
 

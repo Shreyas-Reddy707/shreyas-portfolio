@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Github, Linkedin, Menu, Send, X } from "lucide-react";
+import { FileText, Github, Linkedin, Send } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -19,7 +19,6 @@ export function RecruiterBar({ profile }: { profile: CandidateProfile }) {
   const rawPathname = usePathname();
   const pathname = rawPathname || "/";
   const [modalOpen, setModalOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <>
@@ -83,7 +82,6 @@ export function RecruiterBar({ profile }: { profile: CandidateProfile }) {
               href={profile.resume_pdf_url}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Download Resume PDF"
               className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700/80 bg-surface/80 px-3 py-1.5 font-mono text-xs text-slate-200 transition hover:border-[#00F0FF]/50 hover:text-white"
             >
               <FileText className="h-3.5 w-3.5 text-emeraldSignal" />
@@ -96,46 +94,10 @@ export function RecruiterBar({ profile }: { profile: CandidateProfile }) {
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#00F0FF] px-3.5 py-1.5 text-xs font-semibold text-slate-950 shadow-[0_0_20px_rgba(0,240,255,0.35)] hover:bg-cyan-300 transition"
             >
               <Send className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Get in Touch</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-slate-800 bg-surface/80 text-slate-300 hover:text-white transition"
-              aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
-            >
-              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              <span>Get in Touch</span>
             </button>
           </div>
         </div>
-
-        {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-800 bg-[#050508]/95 px-4 py-3 backdrop-blur-xl">
-            <nav className="flex flex-col gap-1.5">
-              {NAV_ITEMS.map((item) => {
-                const active =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={
-                      active
-                        ? "rounded-lg border border-[#00F0FF]/40 bg-[#00F0FF]/12 px-3 py-2 text-xs font-medium text-[#00F0FF]"
-                        : "rounded-lg px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800/80 hover:text-white"
-                    }
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-          </div>
-        )}
       </header>
 
       <ContactModal

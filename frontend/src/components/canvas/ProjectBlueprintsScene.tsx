@@ -65,7 +65,6 @@ export function ProjectBlueprintsScene() {
         <CvTopographySurfaceVisualizer activeLayer={activeLayer} />
       ) : activeVisualizerType === "ml_model_eval_matrix" ||
         activeVisualizerType === "colab_notebook_workflow" ||
-        activeVisualizerType === "colab_notebook_surface" ||
         activeVisualizerType === "architecture_flowchart_dag" ? (
         <CadModuleVisualizer activeLayer={activeLayer} />
       ) : (

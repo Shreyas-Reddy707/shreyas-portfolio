@@ -461,10 +461,6 @@ async def sync_database_from_manifest(manifest_path: Path) -> dict[str, Any]:
 
         await session.commit()
 
-        # Invalidate shared portfolio cache and generation counter immediately following commit
-        await invalidate_portfolio_cache()
-        print("Redis portfolio cache invalidated immediately after manifest commit.")
-
         # 6. Run GitHub sync if configured
         if settings.GITHUB_USERNAME and settings.GITHUB_PAT:
             try:
@@ -476,15 +472,13 @@ async def sync_database_from_manifest(manifest_path: Path) -> dict[str, Any]:
                 print(f"GitHub sync warning (session rolled back): {e}")
 
         # 7. Refresh embeddings
-        try:
-            print("Refreshing pgvector embeddings...")
-            embed_result = await seed_all_embeddings(session)
-            print(f"Embeddings refreshed: {embed_result}")
-        except Exception as e:
-            print(f"Embedding refresh warning: {e}")
-            raise
-        finally:
-            await invalidate_portfolio_cache()
+        print("Refreshing pgvector embeddings...")
+        embed_result = await seed_all_embeddings(session)
+        print(f"Embeddings refreshed: {embed_result}")
+
+        # 8. Flush Redis cache
+        await invalidate_portfolio_cache()
+        print("Redis portfolio cache invalidated.")
 
     return {
         "projects": len(manifest_project_slugs),

@@ -35,9 +35,3 @@ volumes:
   shreyas_portfolio_pgdata:
   shreyas_portfolio_redisdata:
 
-networks:
-  default:
-    driver: bridge
-    driver_opts:
-      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"
-

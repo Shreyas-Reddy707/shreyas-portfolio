@@ -418,28 +418,26 @@ Migration `0002_seed_shreyas_ground_truth.py` MUST populate these exact verified
    - *Category:* `Agentic AI & RAG` | *3D Archetype:* `neural_data_core`
    - *Tech Stack:* `["Next.js 15", "FastAPI", "PostgreSQL", "pgvector", "Tailwind CSS", "Ollama", "Pytest", "Playwright"]`
    - *Highlights:* End-to-end conversational data intelligence workbench combining local Ollama SLMs with `pgvector` semantic indexing and automated E2E Playwright verification.
-3. **`constructpulse`** — **ConstructPulse: Autonomous Construction Intelligence & CRM Sync Engine**
-   - *Category:* `Enterprise AI & Automation` | *3D Archetype:* `construction_wireframe_isometric`
-   - *Tech Stack:* `["FastAPI", "PostgreSQL", "RAVE Build API", "HubSpot", "Pytest", "Docker"]`
-   - *Highlights:* Real-time construction project intelligence platform synchronizing CRM deal pipelines, spec sheets, and subcontractor scheduling.
-4. **`crisispulse`** — **CrisisPulse: Geospatial Multi-Modal Disaster Intelligence Platform**
-   - *Category:* `Geospatial AI & Crisis Ops` | *3D Archetype:* `geospatial_disaster_globe`
-   - *Tech Stack:* `["FastAPI", "GeoJSON", "Mapbox GL", "Ollama", "Redis", "WebSockets"]`
-   - *Highlights:* Real-time multi-modal crisis intelligence aggregating emergency feeds, satellite overlays, and automated resource dispatch recommendations.
+3. **`project-sentinel`** — **Project Sentinel: Real-Time UEBA Threat Detection Framework**
+   - *Category:* `Cybersecurity & Zero-Trust` | *3D Archetype:* `ueba_radar_grid`
+   - *Tech Stack:* `["Python", "Anomaly Detection", "UEBA", "Real-Time Telemetry", "FastAPI", "Security Analytics"]`
+   - *Highlights:* Built for Cybersecurity Hackathon 2025 to detect anomalous insider and entity behavior patterns in real time with low false-positive alert triage.
+4. **`denoising-edge-detection`** — **Denoising Prior to Edge Detection & 3D Intensity Workbench**
+   - *Category:* `Computer Vision & ML` | *3D Archetype:* `topography_surface`
+   - *Tech Stack:* `["Python", "OpenCV", "NumPy", "Gradio", "SSIM Metrics", "3D Intensity Topography", "Canny Edge Detection"]`
+   - *Highlights:* Interactive computer vision laboratory evaluating Gaussian and Salt & Pepper noise mitigation across spatial filters, Canny edge accuracy, SSIM scores, and 3D pixel intensity surfaces.
 5. **`telarc`** — **Telugu Digital Archive Portal (`telarc`)**
    - *Category:* `Full-Stack & Open Source` | *3D Archetype:* `cultural_archive_cube`
    - *Tech Stack:* `["Python", "Streamlit", "Hugging Face Spaces", "Multimedia Archiving", "MIT License"]`
    - *Highlights:* Open-source regional digital preservation platform archiving Telugu audio, video, image, and text datasets with accessible metadata indexing.
+6. **`folkbattle`** — **Folkbattle: Community Storytelling & Cultural Arena**
+   - *Category:* `Full-Stack & Open Source` | *3D Archetype:* `story_node_constellation`
+   - *Tech Stack:* `["Python", "Streamlit", "Code Swecha", "Community Platform"]`
+   - *Highlights:* Built during SOAI Hackathon 2025 to gamify and preserve regional folklore through interactive community storytelling battles.
 
-### 7.2 Google Colab & Research Repositories (`projects` where `is_flagship = FALSE`)
-1. **`computer-vision`** — **Computer Vision & Denoising Topography Lab**
-2. **`machine-learning`** — **Machine Learning Algorithms & ROC Diagnostics Lab**
-3. **`data-wrangling-visualization`** — **Data Wrangling & Statistical EDA Workbench**
-
-### 7.3 Career & Academic Timeline (`experiences`)
-1. **`limelite-fde-nz`** — **Forward Deployed Engineer | Limelite Constructions (New Zealand)** (`2026-06-01` to Present)
-2. **`viswam-ai-tech-lead`** — **Tech Lead (AI & Software Development Intern) | Viswam.ai** (`2025-06-01` to `2025-08-31`)
-3. **`icfai-tech-btech`** — **B.Tech Computer Science & Engineering (AI) | ICFAI Tech School** (`2023-08-01` to `2027-05-31`)
+### 7.2 Career & Academic Timeline (`experiences`)
+1. **`viswam-ai-tech-lead`** — **Tech Lead (AI & Software Development Intern) | Viswam.ai** (`2025-06-01` to `2025-08-31`)
+   - *Metrics:* `[{"label": "Interns Directed", "value": "200+"}, {"label": "Role", "value": "Tech Lead"}]`
    - *Highlights:* Directed technical strategy, architecture standardization, code reviews, and AI development workflows across a cohort of 200+ engineering interns.
 2. **`team-codex-lead`** — **Core Technical Lead | Team CODEX** (`2025-07-01` to `Present`)
    - *Highlights:* Spearheaded system architecture, backend integration, and AI security engineering across national hackathons alongside UX, AI/Prompt, Data Science, and Deployment specialists.
