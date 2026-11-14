@@ -111,7 +111,7 @@ export function ExperienceClientView({
                     )}
                     <span className="flex items-center gap-1 text-slate-400">
                       <Calendar className="h-3.5 w-3.5 text-slate-500" />
-                      <span>{exp.employment_type}</span>
+                      <span>{exp.employment_type || (exp.is_current ? "Contract" : "Internship")}</span>
                     </span>
                   </div>
                 </div>

@@ -36,6 +36,7 @@ function detectQueryIntent(query: string): Set<string> {
     "work",
     "intern",
     "internship",
+    "contract",
     "job",
     "role",
     "limelite",

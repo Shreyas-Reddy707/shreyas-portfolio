@@ -162,7 +162,7 @@ async def build_full_portfolio_context(
 
             exp_kws = [exp.slug.lower(), exp.role.lower(), exp.organization.lower()]
             if "limelite" in exp.slug.lower():
-                exp_kws.extend(["limelite", "limelite constructions", "forward deployed", "new zealand", "nz", "rave build"])
+                exp_kws.extend(["limelite", "limelite constructions", "forward deployed", "new zealand", "nz", "contract", "rave build"])
             elif "viswam" in exp.slug.lower():
                 exp_kws.extend(["viswam", "viswam.ai", "tech lead", "swecha", "intern pod", "telugu corpus"])
             elif "icfai" in exp.slug.lower():
@@ -246,7 +246,7 @@ def detect_query_intent(query: str) -> set[str]:
         "telarc", "denoising", "computer vision", "machine learning", "deep learning"
     ]
     experience_kw = [
-        "experience", "work", "intern", "internship", "job", "role",
+        "experience", "work", "intern", "internship", "contract", "job", "role",
         "limelite", "viswam", "company", "education", "college",
         "university", "cgpa", "degree"
     ]

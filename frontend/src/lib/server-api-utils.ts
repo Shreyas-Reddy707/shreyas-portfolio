@@ -220,7 +220,7 @@ export async function getMasterContextAndCatalog(): Promise<{
 
       const expKws = [exp.slug.toLowerCase(), exp.role.toLowerCase(), exp.organization.toLowerCase()];
       if (exp.slug.includes("limelite")) {
-        expKws.push("limelite", "limelite constructions", "forward deployed", "new zealand", "nz", "rave build");
+        expKws.push("limelite", "limelite constructions", "forward deployed", "new zealand", "nz", "contract", "rave build");
       } else if (exp.slug.includes("viswam")) {
         expKws.push("viswam", "viswam.ai", "tech lead", "swecha", "intern pod", "telugu corpus");
       } else if (exp.slug.includes("icfai")) {
