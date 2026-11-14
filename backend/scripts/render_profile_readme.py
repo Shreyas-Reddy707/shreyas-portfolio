@@ -3,10 +3,15 @@ import base64
 import json
 import re
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
-import httpx
+try:
+    import httpx
+except ImportError:
+    httpx = None
 
 START_MARKER = "<!-- PORTFOLIO-SYNC:START -->"
 END_MARKER = "<!-- PORTFOLIO-SYNC:END -->"
@@ -114,12 +119,52 @@ def push_to_github_profile(rendered_block: str, username: str, pat: str) -> bool
         "User-Agent": "shreyas-portfolio-sync",
     }
 
-    with httpx.Client(timeout=15.0) as client:
-        sha: str | None = None
-        existing_text = ""
-        resp = client.get(url, headers=headers)
-        if resp.status_code == 200:
-            data = resp.json()
+    if httpx is not None:
+        with httpx.Client(timeout=15.0) as client:
+            sha: str | None = None
+            existing_text = ""
+            resp = client.get(url, headers=headers)
+            if resp.status_code == 200:
+                data = resp.json()
+                sha = data.get("sha")
+                raw_b64 = data.get("content", "")
+                try:
+                    existing_text = base64.b64decode(raw_b64).decode("utf-8")
+                except Exception as exc:
+                    print(f"Failed to safely decode existing README content: {exc}")
+                    return False
+                print(f"Fetched existing README.md for {username}/{username} (SHA: {sha})")
+            elif resp.status_code == 404:
+                print(f"README.md does not exist yet in {username}/{username}; creating fresh.")
+            else:
+                print(f"GitHub GET README failed: {resp.status_code} - {resp.text}")
+                return False
+
+            updated_text = update_readme_content(existing_text, rendered_block)
+            payload: dict[str, Any] = {
+                "message": "chore(profile): synchronize portfolio manifest via automation",
+                "content": base64.b64encode(updated_text.encode("utf-8")).decode("ascii"),
+            }
+            if sha:
+                payload["sha"] = sha
+
+            put_resp = client.put(url, headers=headers, json=payload)
+            if put_resp.status_code in (200, 201):
+                print(f"Successfully pushed updated README.md to {username}/{username} (status: {put_resp.status_code})")
+                return True
+            print(f"GitHub PUT README failed: {put_resp.status_code} - {put_resp.text}")
+            return False
+
+    # Fallback using Python standard library urllib when httpx is unavailable
+    if not url.startswith("https://api.github.com/"):
+        raise ValueError(f"Untrusted GitHub API URL: {url}")
+
+    sha = None
+    existing_text = ""
+    req = urllib.request.Request(url, headers=headers, method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=15.0) as resp:  # noqa: S310
+            data = json.loads(resp.read().decode("utf-8"))
             sha = data.get("sha")
             raw_b64 = data.get("content", "")
             try:
@@ -128,27 +173,43 @@ def push_to_github_profile(rendered_block: str, username: str, pat: str) -> bool
                 print(f"Failed to safely decode existing README content: {exc}")
                 return False
             print(f"Fetched existing README.md for {username}/{username} (SHA: {sha})")
-        elif resp.status_code == 404:
+    except urllib.error.HTTPError as err:
+        if err.code == 404:
             print(f"README.md does not exist yet in {username}/{username}; creating fresh.")
         else:
-            print(f"GitHub GET README failed: {resp.status_code} - {resp.text}")
+            err_body = err.read().decode("utf-8", errors="replace")
+            print(f"GitHub GET README failed: {err.code} - {err_body}")
             return False
+    except urllib.error.URLError as err:
+        print(f"Network error connecting to GitHub API: {err}")
+        return False
 
-        updated_text = update_readme_content(existing_text, rendered_block)
-        payload: dict[str, Any] = {
-            "message": "chore(profile): synchronize portfolio manifest via automation",
-            "content": base64.b64encode(updated_text.encode("utf-8")).decode("ascii"),
-        }
-        if sha:
-            payload["sha"] = sha
+    updated_text = update_readme_content(existing_text, rendered_block)
+    payload_dict: dict[str, Any] = {
+        "message": "chore(profile): synchronize portfolio manifest via automation",
+        "content": base64.b64encode(updated_text.encode("utf-8")).decode("ascii"),
+    }
+    if sha:
+        payload_dict["sha"] = sha
 
-        put_resp = client.put(url, headers=headers, json=payload)
-        if put_resp.status_code in (200, 201):
-            print(f"Successfully pushed updated README.md to {username}/{username} (status: {put_resp.status_code})")
-            return True
-        else:
-            print(f"GitHub PUT README failed: {put_resp.status_code} - {put_resp.text}")
+    put_data = json.dumps(payload_dict).encode("utf-8")
+    put_headers = {**headers, "Content-Type": "application/json"}
+    put_req = urllib.request.Request(url, data=put_data, headers=put_headers, method="PUT")
+    try:
+        with urllib.request.urlopen(put_req, timeout=15.0) as put_resp:  # noqa: S310
+            code = put_resp.getcode()
+            if code in (200, 201):
+                print(f"Successfully pushed updated README.md to {username}/{username} (status: {code})")
+                return True
+            print(f"GitHub PUT README failed: {code}")
             return False
+    except urllib.error.HTTPError as err:
+        err_body = err.read().decode("utf-8", errors="replace")
+        print(f"GitHub PUT README failed: {err.code} - {err_body}")
+        return False
+    except urllib.error.URLError as err:
+        print(f"Network error pushing to GitHub API: {err}")
+        return False
 
 
 def main() -> None:
