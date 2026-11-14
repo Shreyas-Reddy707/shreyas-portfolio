@@ -1,0 +1,35 @@
+meta {
+  name: 06 Agent Rate Limit Trip 429
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/agent/chat
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "query": "Summarize Shreyas Viswam.ai Tech Lead experience",
+    "turnstile_token": "{{turnstileTestToken}}"
+  }
+}
+
+tests {
+  test("Rate limit or success retains nosniff header", function() {
+    expect(res.getHeader("x-content-type-options")).to.equal("nosniff");
+  });
+
+  test("When 429 is tripped, retry_after_seconds is positive", function() {
+    if (res.getStatus() === 429) {
+      expect(res.getBody().retry_after_seconds).to.be.above(0);
+    }
+  });
+}
+

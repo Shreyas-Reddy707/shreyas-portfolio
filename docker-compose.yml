@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: shreyas_portfolio_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - shreyas_portfolio_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: shreyas_portfolio_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - shreyas_portfolio_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  shreyas_portfolio_pgdata:
+  shreyas_portfolio_redisdata:
+

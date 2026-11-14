@@ -1,0 +1,10 @@
+[     484ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3000/favicon.ico:1
+[     589ms] TypeError: Cannot read properties of undefined (reading 'ReactCurrentBatchConfig')
+    at e.exports (http://localhost:3000/_next/static/chunks/114.e5534de67edaf1ae.js:1:17341)
+    at http://localhost:3000/_next/static/chunks/114.e5534de67edaf1ae.js:1:109113
+    at 4904 (http://localhost:3000/_next/static/chunks/114.e5534de67edaf1ae.js:1:111656)
+    at r (http://localhost:3000/_next/static/chunks/webpack-48c1b5846dd7b2db.js:1:127)
+    at 7696 (http://localhost:3000/_next/static/chunks/114.e5534de67edaf1ae.js:1:127456)
+    at r (http://localhost:3000/_next/static/chunks/webpack-48c1b5846dd7b2db.js:1:127)
+    at 1505 (http://localhost:3000/_next/static/chunks/505.7054233a21e13cd2.js:1:147)
+    at r (http://localhost:3000/_next/static/chunks/webpack-48c1b5846dd7b2db.js:1:127)

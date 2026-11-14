@@ -1,0 +1,40 @@
+meta {
+  name: 03 Valid HMAC Webhook & Replay Idempotency 200
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/webhooks/github
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-GitHub-Event: push
+  X-GitHub-Delivery: {{deliveryUuid}}
+  X-Hub-Signature-256: {{computedHmac}}
+}
+
+body:json {
+  {"ref":"refs/heads/main","repository":{"full_name":"shreyas-reddy/SecureRAG"}}
+}
+
+script:pre-request {
+  const crypto = require("crypto");
+  const uuid = crypto.randomUUID();
+  bru.setVar("deliveryUuid", uuid);
+  const rawBody = '{"ref":"refs/heads/main","repository":{"full_name":"shreyas-reddy/SecureRAG"}}';
+  const secret = bru.getEnvVar("githubWebhookSecret") || "";
+  const hmac = "sha256=" + crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  bru.setVar("computedHmac", hmac);
+}
+
+tests {
+  test("Signed webhook returns 200 accepted", function() {
+    expect(res.getStatus()).to.equal(200);
+    expect(res.getBody().status).to.equal("accepted");
+  });
+}
+

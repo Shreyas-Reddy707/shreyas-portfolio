@@ -1,0 +1,48 @@
+[    2610ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[    2779ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[    3188ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[   32571ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[   32625ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[   47852ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[   47907ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[   62847ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[   62894ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[   77651ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[   77693ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[   92891ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[   92934ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  116904ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  116959ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  117110ms] [WARNING] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  120511ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  120552ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  124059ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  124102ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  127716ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  127759ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  131338ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  131373ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  133889ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  133952ms] [ERROR] Functions are not valid as a React child. This may happen if you return %s instead of <%s /> from render. Or maybe you meant to call this function rather than return it.
+  <%s>{%s}</%s> Component Component a Component a @ https://assets.emergent.sh/scripts/emergent-main.js:56
+[  412985ms] [ERROR] WebSocket connection to 'wss://agentic-reddy--38jfex96.preview.emergentagent.com/ws' failed: Error during WebSocket handshake: Unexpected response code: 502 @ https://agentic-reddy--38jfex96.preview.emergentagent.com/static/js/bundle.js:57601
+[  415571ms] [ERROR] WebSocket connection to 'wss://agentic-reddy--38jfex96.preview.emergentagent.com/ws' failed: Error during WebSocket handshake: Unexpected response code: 502 @ https://agentic-reddy--38jfex96.preview.emergentagent.com/static/js/bundle.js:57601
+[  420834ms] [ERROR] WebSocket connection to 'wss://agentic-reddy--38jfex96.preview.emergentagent.com/ws' failed: Error during WebSocket handshake: Unexpected response code: 502 @ https://agentic-reddy--38jfex96.preview.emergentagent.com/static/js/bundle.js:57601
+[  429431ms] [ERROR] WebSocket connection to 'wss://agentic-reddy--38jfex96.preview.emergentagent.com/ws' failed: Error during WebSocket handshake: Unexpected response code: 502 @ https://agentic-reddy--38jfex96.preview.emergentagent.com/static/js/bundle.js:57601
+[  445933ms] [ERROR] WebSocket connection to 'wss://agentic-reddy--38jfex96.preview.emergentagent.com/ws' failed: Error during WebSocket handshake: Unexpected response code: 503 @ https://agentic-reddy--38jfex96.preview.emergentagent.com/static/js/bundle.js:57601
+[  478517ms] [ERROR] WebSocket connection to 'wss://agentic-reddy--38jfex96.preview.emergentagent.com/ws' failed: Error during WebSocket handshake: Unexpected response code: 503 @ https://agentic-reddy--38jfex96.preview.emergentagent.com/static/js/bundle.js:57601
+[  543405ms] [ERROR] WebSocket connection to 'wss://agentic-reddy--38jfex96.preview.emergentagent.com/ws' failed: Error during WebSocket handshake: Unexpected response code: 503 @ https://agentic-reddy--38jfex96.preview.emergentagent.com/static/js/bundle.js:57601
+[  672109ms] [ERROR] WebSocket connection to 'wss://agentic-reddy--38jfex96.preview.emergentagent.com/ws' failed: Error during WebSocket handshake: Unexpected response code: 503 @ https://agentic-reddy--38jfex96.preview.emergentagent.com/static/js/bundle.js:57601
+[  928697ms] [ERROR] WebSocket connection to 'wss://agentic-reddy--38jfex96.preview.emergentagent.com/ws' failed: Error during WebSocket handshake: Unexpected response code: 503 @ https://agentic-reddy--38jfex96.preview.emergentagent.com/static/js/bundle.js:57601
+[ 1442387ms] [ERROR] WebSocket connection to 'wss://agentic-reddy--38jfex96.preview.emergentagent.com/ws' failed: Error during WebSocket handshake: Unexpected response code: 503 @ https://agentic-reddy--38jfex96.preview.emergentagent.com/static/js/bundle.js:57601

@@ -1,0 +1,32 @@
+meta {
+  name: 01 Health & Public Portfolio (Happy Path 200)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/public/portfolio
+  body: none
+  auth: none
+}
+
+tests {
+  test("Status is 200 OK", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Profile full_name matches Shreyas Reddy", function() {
+    const body = res.getBody();
+    expect(body.profile.full_name).to.equal("Shreyas Reddy");
+    expect(body.flagship_projects.length).to.equal(5);
+  });
+
+  test("Cleartext PII is strictly absent from public payload", function() {
+    const raw = JSON.stringify(res.getBody());
+    expect(raw).to.not.include("email_cleartext");
+    expect(raw).to.not.include("phone_cleartext");
+    expect(raw).to.not.include("shreyas.chemakoora@gmail.com");
+    expect(raw).to.not.include("+91 9346759117");
+  });
+}
+

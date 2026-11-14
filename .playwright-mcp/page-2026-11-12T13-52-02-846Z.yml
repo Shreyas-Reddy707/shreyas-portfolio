@@ -1,0 +1,101 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "SHREYAS.DEV" [ref=e6] [cursor=pointer]:
+            - /url: /
+          - navigation [ref=e9]:
+            - link "Command Hub" [ref=e10] [cursor=pointer]:
+              - /url: /
+            - link "Projects" [ref=e11] [cursor=pointer]:
+              - /url: /projects
+            - link "Experience" [ref=e12] [cursor=pointer]:
+              - /url: /experience
+            - link "Hackathons" [ref=e13] [cursor=pointer]:
+              - /url: /hackathons
+            - link "Certificates" [ref=e14] [cursor=pointer]:
+              - /url: /certificates
+        - generic [ref=e15]:
+          - link "LinkedIn" [ref=e16] [cursor=pointer]:
+            - /url: https://www.linkedin.com/in/shreyas-reddy-8a7512285
+          - link "GitHub" [ref=e22] [cursor=pointer]:
+            - /url: https://github.com/shreyas-reddy
+          - link "Resume" [ref=e27] [cursor=pointer]:
+            - /url: /resume/Shreyas_Reddy_Resume.pdf
+          - button "Copy Email" [ref=e32] [cursor=pointer]
+          - button "Copy Phone" [ref=e40] [cursor=pointer]
+          - button "Message" [ref=e44] [cursor=pointer]
+    - main [ref=e49]:
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e52]: Open to AI Engineering & Full-Stack Internships / Grad Roles
+          - heading "Chemakoora Shreyas Reddy" [level=1] [ref=e55]
+          - paragraph [ref=e56]: AI Systems & Full-Stack Engineer | Zero-Trust RAG & Autonomous Agents
+          - paragraph [ref=e57]: B.Tech CSE (AI) '27 at ICFAI Tech | Former Tech Lead directing 200+ interns at Viswam.ai | Architecting Zero-Trust Multi-Agent Systems, UEBA Security Pipelines, & Spatial WebGL Experiences.
+          - generic [ref=e58]:
+            - link "Explore 6 Flagship Systems" [ref=e59] [cursor=pointer]:
+              - /url: /projects
+            - link "Viswam.ai Tech Lead & Timeline" [ref=e68] [cursor=pointer]:
+              - /url: /experience
+        - generic [ref=e73]:
+          - generic [ref=e74]:
+            - paragraph [ref=e75]: Viswam.ai Cohort
+            - paragraph [ref=e76]: 200+
+            - paragraph [ref=e77]: Interns Directed as Tech Lead
+          - generic [ref=e78]:
+            - paragraph [ref=e79]: Flagship Systems
+            - paragraph [ref=e80]: "6"
+            - paragraph [ref=e81]: +0 Auto-Synced GitHub Repos
+          - generic [ref=e82]:
+            - paragraph [ref=e83]: Hackathons
+            - paragraph [ref=e84]: "3"
+            - paragraph [ref=e85]: SIH '25 · CyberSec · SOAI
+          - generic [ref=e86]:
+            - paragraph [ref=e87]: Verified Certs
+            - paragraph [ref=e88]: "6"
+            - paragraph [ref=e89]: Microsoft · Google · NVIDIA · IBM
+        - generic [ref=e90]:
+          - heading "Core Architecture Pillars" [level=2] [ref=e91]
+          - generic [ref=e92]:
+            - generic [ref=e93]:
+              - generic [ref=e94]: 4 Systems
+              - heading "Agentic AI & RAG" [level=3] [ref=e99]
+              - paragraph [ref=e100]: Multi-agent RAG, pgvector HNSW indexing, and local-first Ollama pipelines.
+            - generic [ref=e101]:
+              - generic [ref=e102]: 2 Systems
+              - heading "Cybersecurity & UEBA" [level=3] [ref=e106]
+              - paragraph [ref=e107]: 128-bit hex nonce prompt boundaries, UEBA behavioral baselines, and HMAC GitOps.
+            - generic [ref=e108]:
+              - generic [ref=e109]: 6 Systems
+              - heading "Full-Stack & Cloud" [level=3] [ref=e116]
+              - paragraph [ref=e117]: Next.js 15 App Router, FastAPI async services, Docker, and React Three Fiber.
+        - generic [ref=e118]:
+          - link [ref=e119] [cursor=pointer]:
+            - /url: /projects
+            - heading "Flagship & GitHub Vault" [level=3] [ref=e125]
+            - paragraph [ref=e126]: SecureRAG, DataMind, Project Sentinel, Denoising, telarc, Folkbattle + live repos.
+          - link [ref=e127] [cursor=pointer]:
+            - /url: /experience
+            - heading "Career & Leadership (3)" [level=3] [ref=e131]
+            - paragraph [ref=e132]: Viswam.ai Tech Lead (200+ interns), Team CODEX, ICFAI Tech B.Tech CSE (AI).
+          - link [ref=e133] [cursor=pointer]:
+            - /url: /hackathons
+            - heading "Hackathon Arena (3)" [level=3] [ref=e140]
+            - paragraph [ref=e141]: Smart India Hackathon 2025, Cybersecurity Hackathon 2025, SOAI 2025.
+          - link [ref=e142] [cursor=pointer]:
+            - /url: /certificates
+            - heading "Credentials Vault (6)" [level=3] [ref=e146]
+            - paragraph [ref=e147]: Azure AI-901, Google Cloud Gen AI, NVIDIA DLI, Kaggle, NASSCOM, IBM.
+    - contentinfo [ref=e148]:
+      - generic [ref=e149]:
+        - paragraph [ref=e150]: Chemakoora Shreyas Reddy · Hyderabad, Telangana, India
+        - generic [ref=e151]:
+          - link "Privacy" [ref=e152] [cursor=pointer]:
+            - /url: /privacy
+          - link "Terms" [ref=e153] [cursor=pointer]:
+            - /url: /terms
+          - link "/llms.txt" [ref=e154] [cursor=pointer]:
+            - /url: /llms.txt
+  - button "Ask Shreyas AI" [ref=e155] [cursor=pointer]
+  - alert [ref=e160]
